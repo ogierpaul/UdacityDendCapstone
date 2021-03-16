@@ -1,10 +1,8 @@
 import boto3
-
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
-import time
 from airflow.contrib.hooks.aws_hook import AwsHook
-from airflow.contrib.operators.spark_sql_operator import SparkSqlOperator
+import time
 
 
 class BaseEc2Operator(BaseOperator):
@@ -14,7 +12,6 @@ class BaseEc2Operator(BaseOperator):
         self.aws_conn_id = aws_conn_id
         self.aws_hook = AwsHook(aws_conn_id=aws_conn_id)
         self.region_name = 'eu-central-1'
-        self.aws_hook = AwsHook(self.aws_conn_id)
         self.aws_credentials = self.aws_hook.get_credentials()
         self.aws_access_key_id = self.aws_credentials.access_key
         self.aws_secret_access_key = self.aws_credentials.secret_key
