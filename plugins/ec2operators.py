@@ -292,7 +292,6 @@ class Ec2BashExecutor(BaseEc2Operator):
             raise ConnectionError("No instance available")
         else:
             InstanceId = self._filter_per_tag_per_status(state='available')[0]
-            self.log.info(f"Instance available:{InstanceId}, type {type(InstanceId)}")
             assert isinstance(InstanceId, str)
             for q in self.sh:
                 if not self.parameters is None:

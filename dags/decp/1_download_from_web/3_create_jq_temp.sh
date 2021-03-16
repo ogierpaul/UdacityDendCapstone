@@ -1,0 +1,2 @@
+# Format the Json file to a JSON file with Lines, (jq -cr), removing special chars (sed) in the process
+cd /home/ec2-user/decp && cat  /home/ec2-user/decp/decp_raw.json | jq -cr '.marches[]' | sed 's/\\[tn]//g' > /home/ec2-user/decp/decp_temp.json
