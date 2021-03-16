@@ -19,7 +19,7 @@ ec2_config = {
 siren_config = {
     'url': 'https://www.data.gouv.fr/en/datasets/r/573067d3-f43d-4634-9664-675277b81857',
     'csvname': 'StockUniteLegale_utf8.csv',
-    'output_s3': 's3://paulogiereucentral1/p6/staging/staging_siren/StockUniteLegale_utf8.csv'
+    'output_s3': 's3://paulogiereucentral1/staging/staging_siren/StockUniteLegale_utf8.csv'
 }
 
 # These args will get passed on to each operator

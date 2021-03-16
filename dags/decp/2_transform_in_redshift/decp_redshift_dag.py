@@ -24,10 +24,9 @@ default_args = {
 }
 
 decp_config = {
-    'bucket': 'paulogiereucentral1',
-    'folder': 'p6'
+    'bucket': 'paulogiereucentral1'
 }
-script_folder = '/usr/local/airflow/dags/decp/2_transform_in_redshift/'
+script_folder = 'decp/2_transform_in_redshift/'
 
 dag = DAG(
     'decp_redshift_dag',
@@ -39,24 +38,41 @@ dag = DAG(
 create_redshift_schema = PostgresOperator(
     task_id='create_redshift_schema',
     dag=dag,
-    sql=script_folder+'1_create_schema.sql'
+    sql='1_create_schema.sql'
     )
 
 truncate_marches = PostgresOperator(
     task_id='truncate_staging_marches',
     dag=dag,
-    sql="TRUNCATE staging.staging_marches;"
+    sql="TRUNCATE staging.decp_marches;"
 )
 
 copy_marches_from_s3 = S3ToRedshiftTransfer(
     task_id='copy_marches_from_s3',
     dag=dag,
     schema='staging',
-    table='staging_decp_marches',
+    table='decp_marches',
     s3_bucket=decp_config['bucket'],
-    s3_key=decp_config['folder'] + '/staging/decp_marches',
-    copy_options=["FORMAT AS JSON"]
+    s3_key='staging',
+    copy_options=["FORMAT AS JSON 'auto' "]
+)
+
+truncate_titulaires = PostgresOperator(
+    task_id='truncate_staging_titulaires',
+    dag=dag,
+    sql="TRUNCATE staging.decp_titulaires;"
+)
+
+copy_titulaires_from_s3 = S3ToRedshiftTransfer(
+    task_id='copy_titulaires_from_s3',
+    dag=dag,
+    schema='staging',
+    table='decp_titulaires',
+    s3_bucket=decp_config['bucket'],
+    s3_key='staging',
+    copy_options=["FORMAT AS JSON 'auto'"]
 )
 
 create_redshift_schema >> truncate_marches >> copy_marches_from_s3
+create_redshift_schema >> truncate_titulaires >> copy_titulaires_from_s3
 
