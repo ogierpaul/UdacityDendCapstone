@@ -44,7 +44,7 @@ class RedshiftUpsert(PostgresOperator):
         - See here a workaround : https://gist.github.com/jmindek/62c50dd766556b7b16d6
         - Make sure that there are no duplicates in the select query
     """
-    ui_color = '#9bf6ff'
+    ui_color = '#caffbf'
     # Queries used for Upsert
     q_temp_drop = """DROP TABLE IF EXISTS {schema}.{stage};"""
     q_temp_create = """CREATE TABLE IF NOT EXISTS {schema}.{stage}  (LIKE {schema}.{table});"""

@@ -100,6 +100,8 @@ class BaseEc2Operator(BaseOperator):
 
 
 class Ec2Creator(BaseEc2Operator):
+    ui_color = "#ffadad"
+
     @apply_defaults
     def __init__(self, aws_credentials, tag_key, tag_value, ImageId, KeyName, InstanceType,
                  SecurityGroupId, IamInstanceProfileName, retry=10, sleep=20, start_sleep=60, *args, **kwargs):
@@ -206,6 +208,7 @@ class Ec2Creator(BaseEc2Operator):
 
 
 class Ec2BashExecutor(BaseEc2Operator):
+    ui_color = "#ffd6a5"
     # template_fields = ('sh', )
     # template_ext = ('.sh', )
 
@@ -308,6 +311,7 @@ class Ec2BashExecutor(BaseEc2Operator):
 
 
 class Ec2Terminator(BaseEc2Operator):
+    ui_color = "#bdb2ff"
     @apply_defaults
     def __init__(self, aws_credentials, tag_key, tag_value, terminate='stop', retry=10, sleep=20, *args, **kwargs):
         super(Ec2Terminator, self).__init__(

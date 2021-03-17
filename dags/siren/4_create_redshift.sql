@@ -1,7 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS staging;
 CREATE SCHEMA IF NOT EXISTS datalake;
 
-CREATE TABLE IF NOT EXISTS staging.staging_siren(
+CREATE TABLE IF NOT EXISTS staging.siren_attributes(
     siren                                     VARCHAR(256) PRIMARY KEY ,
     statutDiffusionUniteLegale                VARCHAR(256),
     unitePurgeeUniteLegale                    VARCHAR(256),
@@ -37,4 +37,4 @@ CREATE TABLE IF NOT EXISTS staging.staging_siren(
     caractereEmployeurUniteLegale             VARCHAR(256)
 );
 
-CREATE TABLE IF NOT EXISTS datalake.siren_attributes (LIKE staging.staging_siren);
+CREATE TABLE IF NOT EXISTS datalake.siren_attributes (LIKE staging.siren_attributes);
