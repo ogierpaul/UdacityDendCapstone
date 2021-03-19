@@ -53,7 +53,8 @@ start_decp = DummyOperator(
 )
 stop_decp = DummyOperator(
     task_id='Stop_decp',
-    dag=dag
+    dag=dag,
+    trigger_rule='all_done'
 )
 
 upload_config_marches = S3UploadFromLocal(
@@ -151,13 +152,14 @@ clean_ec2 = Ec2BashExecutor(
 stop_ec2 = Ec2Terminator(
     task_id='stop_ec2',
     dag=dag,
-    terminate='stop'
+    terminate='stop',
+    trigger_rule='all_done'
 )
 
 create_redshift_schema = PostgresOperator(
     task_id='create_redshift_schema',
     dag=dag,
-    sql='1_create_schema.sql'
+    sql='2_transform_in_redshift/1_create_schema.sql'
 )
 
 truncate_marches = PostgresOperator(

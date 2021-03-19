@@ -11,6 +11,8 @@ class UdacityPlugin(AirflowPlugin):
     name = "udacity_plugin"
     operators = [
         redshiftoperators.RedshiftUpsert,
+        redshiftoperators.RedshiftCopyFromS3,
+        redshiftoperators.RedshiftOperator,
         ec2operators.Ec2Creator,
         ec2operators.Ec2BashExecutor,
         ec2operators.BaseEc2Operator,

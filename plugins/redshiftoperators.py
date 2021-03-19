@@ -1,30 +1,128 @@
 from airflow.models import BaseOperator
 from airflow.operators.postgres_operator import PostgresOperator
+from airflow.hooks.postgres_hook import PostgresHook
 from airflow.utils.decorators import apply_defaults
 import psycopg2.sql as S
+import psycopg2
 from psycopg2 import (OperationalError, ProgrammingError, DatabaseError, DataError, NotSupportedError)
 import time
+import inspect
+import os
+
+def read_instructions(s,  file_ending=('.sql'), file_split=';', file_comment='-', file_strip='\n ', ref_dir='/usr/local/airflow/dags/',):
+    # Read the instructions and return the instructions cleaned as a tuple
+    ## If the instructions end with file_ending, it indicates this is a file, and it will try to open them relative
+    # to ref_dir. It will split on the file_split char
+    ## Else, if it is a simple string, it will include it as a tuple
+    ## Else, it if is a list or a tuple, it will return it as a tuple
+    # For each element, it then strips the strings
+    ## And split it
+    commands_unformatted = ()
+    if isinstance(s, str):
+        ending = '.' + s.split('.')[-1]
+        if ending in file_ending:
+            fp = os.path.join(os.path.abspath(ref_dir), s)
+            f = open(fp, 'r')
+            commands_unformatted = f.read().split(file_split)
+            commands_unformatted = tuple(commands_unformatted)
+            f.close()
+        else:
+            commands_unformatted = (s, )
+    else:
+        if isinstance(s, tuple):
+            commands_unformatted = s
+        elif isinstance(s, list):
+            commands_unformatted = tuple(s)
+        else:
+            pass
+    print(commands_unformatted)
+    commands_stripped = map(lambda c: c.strip(file_strip), commands_unformatted)
+    commands_stripped = filter(lambda c: len(c) > 0, commands_stripped)
+    commands_stripped = filter(lambda c: c[0] != file_comment, commands_stripped)
+    commands_stripped = tuple(commands_stripped)
+    return commands_stripped
 
 
-def read_format_sql(fp, **params):
+
+
+class RedshiftOperator(BaseOperator):
+    ui_color = "#ffc6ff"
+
+    @apply_defaults
+    def __init__(self, redshift_conn_id, sql, parameters=None, file_directory=None, *args, **kwargs):
+        if parameters is None:
+            self.parameters = {}
+        else:
+            self.parameters = parameters
+        if file_directory is None:
+            frame = inspect.stack()[1]
+            module = inspect.getmodule(frame[0])
+            file_calling = module.__file__
+            directory= os.path.dirname(os.path.abspath(file_calling))
+            self.dag_path = directory
+        else:
+            self.dag_path = file_directory
+        self.redshift_conn_id = redshift_conn_id
+        super(RedshiftOperator, self).__init__(*args, **kwargs)
+        self.commands_stripped = read_instructions(
+            sql,
+            ref_dir=self.dag_path,
+            file_ending=('.sql'),
+            file_comment='-',
+            file_split=';',
+            file_strip =' \n'
+        )
+
+    def execute(self, context=None):
+        hook = PostgresHook(postgres_conn_id=self.redshift_conn_id)
+        for q in self.commands_stripped:
+            qf = S.SQL(q).format(**self.parameters)
+            self.log.info("Executing Query:{}".format())
+            hook.run((qf,))
+            pass
+
+class RedshiftCopyFromS3(RedshiftOperator):
+    ui_color = "#f4a261"
+    q_truncate = "TRUNCATE {schema}.{table};"
+    q_copy = """
+    COPY {schema}.{table}
+    FROM {s3path}
+    IAM_ROLE AS {arn}
+    REGION {region}
+    COMPUPDATE OFF
+    TIMEFORMAT as 'epochmillisecs'
+    TRUNCATECOLUMNS BLANKSASNULL EMPTYASNULL
     """
-    Read a file containing SQL statements separated by ;
-    Format them using psycopg2 SQL module and the params arguments
-    Args:
-        fp (str): file path
-        **params: SQL.Identifier, SQL.Literral, or else
+    @apply_defaults
+    def __init__(self, redshift_conn_id, arn, s3path, schema, table, region='eu-central-1', truncate=True, format='csv', delimiter=',', jsonpath='auto', header = True, *args, **kwargs):
+        option_line = []
+        if format == 'csv':
+            option_line.append('FORMAT AS CSV')
+            if header is True:
+                option_line.append('IGNOREHEADER AS 1')
+            option_line.append("DELIMITER AS '{}'".format(delimiter[0]))
+        elif format == 'json':
+            option_line.append('FORMAT AS JSON')
+            option_line += (jsonpath)
+        option_line = ' '.join(option_line)
+        q_copy_with_options = self.q_copy + '\n' + option_line +';'
+        if truncate is True:
+            sql = (self.q_truncate, q_copy_with_options)
+        else:
+            sql = (q_copy_with_options)
+        parameters = {
+            'arn': S.Literal(arn),
+            'schema': S.Identifier(schema),
+            'table': S.Identifier(table),
+            's3path': S.Literal(s3path),
+            'region': S.Literal(region)
+        }
+        super(RedshiftCopyFromS3, self).__init__(redshift_conn_id=redshift_conn_id, sql=sql, parameters=parameters, *args, **kwargs)
+        pass
 
-    Returns:
-        list
-    """
-    with open(fp, 'r') as f:
-        statements = f.read()
-    f.close()
-    sql_all = [S.SQL(q.strip() + ';').format(**params) for q in statements.split(';') if q.strip() != '']
-    return sql_all
 
-
-class RedshiftUpsert(PostgresOperator):
+class RedshiftUpsert(RedshiftOperator):
+    ui_color = '#caffbf'
     """
     Demonstrator of an Operator to UPSERT data in Redshift, and then perform data quality checks
     See pseudocode here: https://docs.aws.amazon.com/redshift/latest/dg/merge-replacing-existing-rows.html
@@ -61,11 +159,11 @@ class RedshiftUpsert(PostgresOperator):
     @apply_defaults
     def __init__(self,
                  redshift_conn_id,
-                 pkey="",
                  query="",
-                 stageprefix="stageupsert_",
                  schema="",
+                 pkey="",
                  table="",
+                 stageprefix="stageupsert_",
                  *args, **kwargs):
         """
 
@@ -81,12 +179,9 @@ class RedshiftUpsert(PostgresOperator):
         params = {
             'pkey': S.Identifier(pkey),
             'table': S.Identifier(table),
-            'schema':S.Identifier(schema),
+            'schema': S.Identifier(schema),
             'stage': S.Identifier("".join([stageprefix, table])),
             'query': S.SQL(query.strip(';'))
         }
-        qf_all = [S.SQL(q).format(**params) for q in RedshiftUpsert.q_all]
-        super(RedshiftUpsert, self).__init__(postgres_conn_id=redshift_conn_id, sql=qf_all, **kwargs)
-
-
+        super(RedshiftUpsert, self).__init__(redshift_conn_id==redshift_conn_id, sql=self.q_all, parameters = params, *args, **kwargs)
 

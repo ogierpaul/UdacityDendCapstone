@@ -1,7 +1,7 @@
-TRUNCATE {schemaint}.{table};
+TRUNCATE staging.cpv_attributes;
 
-COPY {schemaint}.{table}
-FROM {inputpath}
+COPY staging.cpv_attributes
+FROM 's3'
 IAM_ROLE AS {arn}
 REGION {region}
 COMPUPDATE OFF
