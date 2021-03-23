@@ -3,7 +3,7 @@ from datetime import timedelta
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from ec2operators import Ec2BashExecutor, BaseEc2Operator, Ec2Creator, Ec2Terminator
+from ec2operators import Ec2BashExecutor, Ec2CurlGet, Ec2Creator, Ec2Terminator
 # from airflow.operators.postgres_operator import PostgresOperator
 # from airflow.operators.s3_to_redshift_operator import S3ToRedshiftTransfer
 from redshiftoperators import RedshiftUpsert, RedshiftCopyFromS3, RedshiftOperator
@@ -18,14 +18,19 @@ ec2_config = {
     'SecurityGroupId': 'sg-c21b9eb8',
     'start_sleep': 60
 }
-siren_config = {
-    'url': 'https://www.data.gouv.fr/en/datasets/r/573067d3-f43d-4634-9664-675277b81857',
-    'csvname': 'StockUniteLegale_utf8.csv',
-    'output_s3': 's3://paulogiereucentral1/staging/siren_attributes/StockUniteLegale_utf8.csv',
+infogreffe_config = {
+    'url': 'https://opendata.datainfogreffe.fr/api/records/1.0/download/',
+    'csvname': 'infogreffe_chiffrecles_2019.csv',
+    's3path': 's3://paulogiereucentral1/staging/infogreffe_attributes/infogreffe_chiffrecles_2019.csv',
     'arn': 'arn:aws:iam::075227836161:role/redshiftwiths3'
 }
+api_parameters = {
+    "dataset": "chiffres-cles-2019",
+    "format":"csv",
+    "fields":"denomination,siren,nic,forme_juridique,code_ape,libelle_ape,adresse,code_postal,ville,date_de_cloture_exercice_1,millesime_1,tranche_ca_millesime_1,duree_1,ca_1,resultat_1,effectif_1"
+}
 
-dag_folder = '/Users/paulogier/81-GithubPackages/UdacityDendCapstone/dags/siren/'
+dag_folder = '/Users/paulogier/81-GithubPackages/UdacityDendCapstone/dags/infogreffe/'
 
 _docs_md_fp = os.path.join(
         os.path.abspath(dag_folder),
@@ -43,94 +48,83 @@ default_args = {
     'aws_conn_id': 'aws_credentials',
     'autocommit': True,
     'tag_key': 'Stream',
-    'tag_value': 'Siren',
+    'tag_value': 'Infogreffe',
     'execution_timeout': timedelta(seconds=300),
     'arn': 'arn:aws:iam::075227836161:role/redshiftwiths3'
 }
 
 with DAG(
-    'siren_from_web_to_redshift',
+    'infogreffe_from_api_to_redshift',
     default_args=default_args,
-    description='Download the Siren File from the web to Redshift',
+    description='Download the Infogreffe data from the API to Redshift',
     schedule_interval=None,
     tags=['dend']
 ) as dag:
     dag.doc_md = open(_docs_md_fp, 'r').read()
 
-    start_siren = DummyOperator(
-        task_id='start_siren',
-        dag=dag
+    dummy_start = DummyOperator(
+        task_id='start_infogreffe'
     )
 
-    stop_siren = DummyOperator(
-        task_id='stop_siren',
-        dag=dag,
-        trigger_rule='all_done'
+    dummy_stop = DummyOperator(
+        task_id='stop_siren'
     )
 
     create_ec2_if_not_exists = Ec2Creator(
         task_id='create_ec2_if_not_exists',
-        dag=dag,
         **ec2_config
     )
 
     prepare_ec2 = Ec2BashExecutor(
         task_id='prepare_ec2',
-        dag=dag,
-        sh=os.path.join(dag_folder, '1_siren_ec2_init.sh')
+        sh=os.path.join(dag_folder, '1_prepare_ec2.sh')
     )
 
-    download_from_web = Ec2BashExecutor(
-        task_id='download_from_web',
-        dag=dag,
-        sh=os.path.join(dag_folder, '2_siren_web_download.sh'),
-        parameters=siren_config,
-        sleep=5,
-        retry=20
+    api_get = Ec2CurlGet(
+        task_id='api_get',
+        url=infogreffe_config['url'],
+        filename=f"/home/ec2-user/infogreffe/{infogreffe_config['csvname']}",
+        parameters=api_parameters,
+        retry=30
     )
 
     copy_to_s3 = Ec2BashExecutor(
         task_id='copy_to_s3',
-        dag=dag,
         sh=os.path.join(dag_folder, '3_copy_to_s3.sh'),
-        parameters=siren_config,
+        parameters=infogreffe_config,
         sleep=10,
         retry=20
     )
 
     stop_ec2 = Ec2Terminator(
         task_id='stop_ec2',
-        dag=dag,
-        terminate='stop',
-        trigger_rule='all_done'
+        terminate='stop'
+        # trigger_rule='all_done'
     )
 
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
-        dag=dag,
-        sql='4_create_redshift.sql',
+        sql=os.path.join(dag_folder, '5_infogreffe_create_redshift.sql'),
         file_directory=dag_folder
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
         task_id='copy_from_s3',
-        table='siren_attributes',
+        table='infogreffe_attributes',
         schema='staging',
-        dag=dag,
-        s3path='s3://paulogiereucentral1/staging/siren_attributes/',
-        arn=siren_config['arn'],
+        s3path='s3://paulogiereucentral1/staging/infogreffe_attributes/',
+        arn=infogreffe_config['arn'],
         format='csv',
         header=True,
-        delimiter=','
+        delimiter=';'
     )
 
     upsert_datalake = RedshiftUpsert(task_id='upsert_datalake',
-                                     dag=dag,
                                      redshift_conn_id='aa_redshift',
                                      pkey="siren",
-                                     query="SELECT * FROM staging.siren_attributes",
+                                     query="SELECT * FROM staging.infogreffe_attributes",
                                      table="siren_attributes",
                                      schema="datalake")
 
-    start_siren >> create_ec2_if_not_exists >> prepare_ec2 >> download_from_web >> copy_to_s3 >> stop_ec2
-    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_siren
+    dummy_start>> create_ec2_if_not_exists >> prepare_ec2 >> api_get >> copy_to_s3 >> stop_ec2
+    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> dummy_stop

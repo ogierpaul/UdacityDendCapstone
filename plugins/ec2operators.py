@@ -103,7 +103,7 @@ class Ec2Creator(BaseEc2Operator):
     ui_color = "#ffadad"
 
     @apply_defaults
-    def __init__(self, aws_credentials, tag_key, tag_value, ImageId, KeyName, InstanceType,
+    def __init__(self, aws_conn_id, tag_key, tag_value, ImageId, KeyName, InstanceType,
                  SecurityGroupId, IamInstanceProfileName, retry=10, sleep=20, start_sleep=60, *args, **kwargs):
         """
         Args:
@@ -116,7 +116,7 @@ class Ec2Creator(BaseEc2Operator):
             TAG_VALUE (str): Tag Value
 
         """
-        super(Ec2Creator, self).__init__(aws_conn_id=aws_credentials, tag_key=tag_key, tag_value=tag_value, retry=retry,
+        super(Ec2Creator, self).__init__(aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, retry=retry,
                                          sleep=sleep, *args, **kwargs)
         self.ImageId = ImageId
         self.KeyName = KeyName
@@ -213,9 +213,9 @@ class Ec2BashExecutor(BaseEc2Operator):
     # template_ext = ('.sh', )
 
     @apply_defaults
-    def __init__(self, aws_credentials, tag_key, tag_value, sh, retry=10, sleep=3, parameters=None, *args, **kwargs):
+    def __init__(self, aws_conn_id, tag_key, tag_value, sh, retry=10, sleep=3, parameters=None, *args, **kwargs):
         super(Ec2BashExecutor, self).__init__(
-            aws_conn_id=aws_credentials, tag_key=tag_key, tag_value=tag_value, retry=retry, sleep=sleep, *args, **kwargs
+            aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, retry=retry, sleep=sleep, *args, **kwargs
         )
         self.sh = self._read_commands(sh)
         self.ssm = boto3.client('ssm',
@@ -313,9 +313,9 @@ class Ec2BashExecutor(BaseEc2Operator):
 class Ec2Terminator(BaseEc2Operator):
     ui_color = "#bdb2ff"
     @apply_defaults
-    def __init__(self, aws_credentials, tag_key, tag_value, terminate='stop', retry=10, sleep=20, *args, **kwargs):
+    def __init__(self, aws_conn_id, tag_key, tag_value, terminate='stop', retry=10, sleep=20, *args, **kwargs):
         super(Ec2Terminator, self).__init__(
-            aws_conn_id=aws_credentials, tag_key=tag_key, tag_value=tag_value, retry=retry, sleep=sleep, *args, **kwargs
+            aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, retry=retry, sleep=sleep, *args, **kwargs
         )
         self.terminate = terminate
 
@@ -346,3 +346,14 @@ class Ec2Terminator(BaseEc2Operator):
         s = ";\n"
         self.log.info(f"Final Instances found:\n{s.join(all_instances_status)}")
         self.log.info("END OF EXECUTION")
+
+
+class Ec2CurlGet(Ec2BashExecutor):
+    ui_color = "#e76f51"
+
+    @apply_defaults
+    def __init__(self, aws_conn_id, tag_key, tag_value, url, filename, parameters=None, sleep=3, retry=20, *args, **kwargs):
+        base_call = """curl -X GET {url} -o {filename}"""
+        complete_url = url + '?' + "&".join([f"{k}={parameters[k]}" for k in parameters])
+        sh = base_call.format(url=complete_url, filename=filename)
+        super(Ec2CurlGet, self).__init__(aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, sh=sh, sleep=sleep, retry=retry, *args, **kwargs)
