@@ -3,11 +3,11 @@ from datetime import timedelta
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from airflow.operators import Ec2BashExecutor, BaseEc2Operator, Ec2Creator, Ec2Terminator
+from ec2operators import Ec2BashExecutor, BaseEc2Operator, Ec2Creator, Ec2Terminator
 # from airflow.operators.postgres_operator import PostgresOperator
-from airflow.operators.s3_to_redshift_operator import S3ToRedshiftTransfer
-from airflow.operators import RedshiftUpsert, RedshiftCopyFromS3, RedshiftOperator
-from airflow.operators.dummy_operator import DummyOperator
+# from airflow.operators.s3_to_redshift_operator import S3ToRedshiftTransfer
+from redshiftoperators import RedshiftUpsert, RedshiftCopyFromS3, RedshiftOperator
+from airflow.operators.dummy import DummyOperator
 import os
 
 ec2_config = {
@@ -16,7 +16,7 @@ ec2_config = {
     'KeyName': 'ec2keypairfrankfurt',
     'IamInstanceProfileName': 'myec2ssms3',
     'SecurityGroupId': 'sg-c21b9eb8',
-    'StartSleep': 60
+    'start_sleep': 60
 }
 siren_config = {
     'url': 'https://www.data.gouv.fr/en/datasets/r/573067d3-f43d-4634-9664-675277b81857',
@@ -25,10 +25,10 @@ siren_config = {
     'arn': 'arn:aws:iam::075227836161:role/redshiftwiths3'
 }
 
-dag_folder = '/usr/local/airflow/dags/siren/'
+dag_folder = '/Users/paulogier/81-GithubPackages/UdacityDendCapstone/dags/siren/'
 
 _docs_md_fp = os.path.join(
-        os.path.dirname(dag_folder),
+        os.path.abspath(dag_folder),
         'Readme.md'
     )
 # These args will get passed on to each operator
@@ -47,76 +47,81 @@ default_args = {
     'tag_key': 'Stream',
     'tag_value': 'Siren',
     'execution_timeout': timedelta(seconds=300),
+    'arn': 'arn:aws:iam::075227836161:role/redshiftwiths3'
 }
 
 with DAG(
     'siren_from_web_to_redshift',
     default_args=default_args,
     description='Download the Siren File from the web to Redshift',
-    schedule_interval=None
+    schedule_interval=None,
+    tags=['dend']
 ) as dag:
     dag.doc_md = open(_docs_md_fp, 'r').read()
 
-    # start_siren = DummyOperator(
-    #     task_id='start_siren',
-    #     dag=dag
-    # )
-    #
-    # stop_siren = DummyOperator(
-    #     task_id='stop_siren',
-    #     dag=dag,
-    #     trigger_rule='all_done'
-    # )
-    #
-    # create_ec2_if_not_exists = Ec2Creator(
-    #     task_id='create_ec2_if_not_exists',
-    #     dag=dag,
-    #     **ec2_config
-    # )
-    #
-    # prepare_ec2 = Ec2BashExecutor(
-    #     task_id='prepare_ec2',
-    #     dag=dag,
-    #     sh=os.path.join(dag_folder, '1_siren_ec2_init.sh')
-    # )
-    #
-    # download_from_web = Ec2BashExecutor(
-    #     task_id='download_from_web',
-    #     dag=dag,
-    #     sh=os.path.join(dag_folder, '2_siren_web_download.sh'),
-    #     parameters=siren_config,
-    #     sleep=5,
-    #     retry=20
-    # )
+    start_siren = DummyOperator(
+        task_id='start_siren',
+        dag=dag
+    )
 
-    # copy_to_s3 = Ec2BashExecutor(
-    #     task_id='copy_to_s3',
-    #     dag=dag,
-    #     sh=os.path.join(dag_folder, '3_copy_to_s3.sh'),
-    #     parameters=siren_config,
-    #     sleep=10,
-    #     retry=20
-    # )
-    #
-    # stop_ec2 = Ec2Terminator(
-    #     task_id='stop_ec2',
-    #     dag=dag,
-    #     terminate='stop',
-    #     trigger_rule='all_done'
-    # )
+    stop_siren = DummyOperator(
+        task_id='stop_siren',
+        dag=dag,
+        trigger_rule='all_done'
+    )
+
+    create_ec2_if_not_exists = Ec2Creator(
+        task_id='create_ec2_if_not_exists',
+        dag=dag,
+        **ec2_config
+    )
+
+    prepare_ec2 = Ec2BashExecutor(
+        task_id='prepare_ec2',
+        dag=dag,
+        sh=os.path.join(dag_folder, '1_siren_ec2_init.sh')
+    )
+
+    download_from_web = Ec2BashExecutor(
+        task_id='download_from_web',
+        dag=dag,
+        sh=os.path.join(dag_folder, '2_siren_web_download.sh'),
+        parameters=siren_config,
+        sleep=5,
+        retry=20
+    )
+
+    copy_to_s3 = Ec2BashExecutor(
+        task_id='copy_to_s3',
+        dag=dag,
+        sh=os.path.join(dag_folder, '3_copy_to_s3.sh'),
+        parameters=siren_config,
+        sleep=10,
+        retry=20
+    )
+
+    stop_ec2 = Ec2Terminator(
+        task_id='stop_ec2',
+        dag=dag,
+        terminate='stop',
+        trigger_rule='all_done'
+    )
 
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
         dag=dag,
-        sql='4_create_redshift.sql'
+        sql='4_create_redshift.sql',
+        file_directory=dag_folder
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
-        task_id='truncate_staging',
+        task_id='copy_from_s3',
+        table='siren_attributes',
+        schema='staging',
         dag=dag,
-        s3path=siren_config['output_s3'],
+        s3path='s3://paulogiereucentral1/staging/siren_attributes/',
         arn=siren_config['arn'],
-        csv=True,
+        format='csv',
         header=True,
         delimiter=','
     )
@@ -129,5 +134,5 @@ with DAG(
                                      table="siren_attributes",
                                      schema="datalake")
 
-    # start_siren >> create_ec2_if_not_exists >> prepare_ec2 >> download_from_web >> copy_to_s3 >> stop_ec2
-    create_redshift >> copy_from_s3 >> upsert_datalake
+    start_siren >> create_ec2_if_not_exists >> prepare_ec2 >> download_from_web >> copy_to_s3 >> stop_ec2
+    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_siren

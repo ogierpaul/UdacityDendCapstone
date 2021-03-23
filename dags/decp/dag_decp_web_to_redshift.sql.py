@@ -3,11 +3,12 @@ from datetime import timedelta
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from airflow.operators import Ec2BashExecutor, BaseEc2Operator, Ec2Creator, Ec2Terminator, S3UploadFromLocal
-from airflow.operators.postgres_operator import PostgresOperator
-from airflow.operators.s3_to_redshift_operator import S3ToRedshiftTransfer
-from airflow.operators import RedshiftUpsert
-from airflow.operators.dummy_operator import DummyOperator
+from ec2operators import Ec2BashExecutor, Ec2Creator, Ec2Terminator
+from s3uploader import S3UploadFromLocal
+from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert
+# from airflow.operators.s3_to_redshift_operator import S3ToRedshiftTransfer
+# from airflow.operators import RedshiftUpsert
+from airflow.operators.dummy import DummyOperator
 
 default_args = {
     'depends_on_past': False,
@@ -23,6 +24,7 @@ default_args = {
     'tag_key': 'Stream',
     'tag_value': 'Decp',
     'execution_timeout': timedelta(seconds=300),
+    'arn': 'arn:aws:iam::075227836161:role/redshiftwiths3'
 }
 ec2_config = {
     'ImageId': 'ami-0de9f803fcac87f46',
@@ -30,7 +32,7 @@ ec2_config = {
     'KeyName': 'ec2keypairfrankfurt',
     'IamInstanceProfileName': 'myec2ssms3',
     'SecurityGroupId': 'sg-c21b9eb8',
-    'StartSleep': 60
+    'start_sleep': 60
 }
 decp_config = {
     'bucket': 'paulogiereucentral1',
@@ -41,10 +43,12 @@ dag = DAG(
     'decp_from_web_to_redshift',
     default_args=default_args,
     description='Download DECP data from Web to Redshift',
-    schedule_interval=None
+    schedule_interval=None,
+    tags=['dend']
 )
-dir_web_scripts = '/usr/local/airflow/dags/decp/1_download_from_web/'
-_docs_md_fp = '/usr/local/airflow/dags/decp/Readme.md'
+dir_web_scripts = '/Users/paulogier/81-GithubPackages/UdacityDendCapstone/dags/decp/1_download_from_web/'
+dir_transform_sql = '/Users/paulogier/81-GithubPackages/UdacityDendCapstone/dags/decp/2_transform_in_redshift/'
+_docs_md_fp = 'Users/paulogier/81-GithubPackages/UdacityDendCapstone/dags/decp/Readme.md'
 dag.doc_md = open(_docs_md_fp, 'r').read()
 
 start_decp = DummyOperator(
@@ -156,42 +160,44 @@ stop_ec2 = Ec2Terminator(
     trigger_rule='all_done'
 )
 
-create_redshift_schema = PostgresOperator(
+create_redshift_schema = RedshiftOperator(
     task_id='create_redshift_schema',
     dag=dag,
-    sql='2_transform_in_redshift/1_create_schema.sql'
+    sql=dir_transform_sql + '1_create_schema.sql'
 )
 
-truncate_marches = PostgresOperator(
+truncate_marches = RedshiftOperator(
     task_id='truncate_staging_marches',
     dag=dag,
     sql="TRUNCATE staging.decp_marches;"
 )
 
-copy_marches_from_s3 = S3ToRedshiftTransfer(
+copy_marches_from_s3 = RedshiftCopyFromS3(
     task_id='copy_marches_from_s3',
     dag=dag,
     schema='staging',
     table='decp_marches',
-    s3_bucket=decp_config['bucket'],
-    s3_key='staging',
-    copy_options=["FORMAT AS JSON 'auto' "]
+    s3path='s3://paulogiereucentral1/staging/decp_marches/',
+    format='json',
+    jsonpath='auto',
+    truncate=True
 )
 
-truncate_titulaires = PostgresOperator(
+truncate_titulaires = RedshiftOperator(
     task_id='truncate_staging_titulaires',
     dag=dag,
     sql="TRUNCATE staging.decp_titulaires;"
 )
 
-copy_titulaires_from_s3 = S3ToRedshiftTransfer(
+copy_titulaires_from_s3 = RedshiftCopyFromS3(
     task_id='copy_titulaires_from_s3',
     dag=dag,
     schema='staging',
     table='decp_titulaires',
-    s3_bucket=decp_config['bucket'],
-    s3_key='staging',
-    copy_options=["FORMAT AS JSON 'auto'"]
+    s3path='s3://paulogiereucentral1/staging/decp_titulaires/',
+    format='json',
+    jsonpath='auto',
+    truncate=True
 )
 
 start_decp >> [upload_config_titulaires, upload_config_marches] >> create_ec2

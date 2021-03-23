@@ -1,11 +1,13 @@
-from airflow.models import BaseOperator
-from airflow.operators.postgres_operator import PostgresOperator
-from airflow.hooks.postgres_hook import PostgresHook
+from airflow.models.baseoperator import BaseOperator
+# from airflow.operators.postgres_operator import PostgresOperator
+# from airflow.hooks.postgres_hook import PostgresHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+# from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.utils.decorators import apply_defaults
 import psycopg2.sql as S
-import psycopg2
-from psycopg2 import (OperationalError, ProgrammingError, DatabaseError, DataError, NotSupportedError)
-import time
+# import psycopg2
+# from psycopg2 import (OperationalError, ProgrammingError, DatabaseError, DataError, NotSupportedError)
+# import time
 import inspect
 import os
 
@@ -77,7 +79,7 @@ class RedshiftOperator(BaseOperator):
         hook = PostgresHook(postgres_conn_id=self.redshift_conn_id)
         for q in self.commands_stripped:
             qf = S.SQL(q).format(**self.parameters)
-            self.log.info("Executing Query:{}".format())
+            self.log.info("Executing Query:{}".format(qf.as_string(hook.get_conn())))
             hook.run((qf,))
             pass
 
@@ -102,20 +104,20 @@ class RedshiftCopyFromS3(RedshiftOperator):
                 option_line.append('IGNOREHEADER AS 1')
             option_line.append("DELIMITER AS '{}'".format(delimiter[0]))
         elif format == 'json':
-            option_line.append('FORMAT AS JSON')
-            option_line += (jsonpath)
+            option_line.append("FORMAT AS JSON '{}'".format(jsonpath))
         option_line = ' '.join(option_line)
         q_copy_with_options = self.q_copy + '\n' + option_line +';'
         if truncate is True:
             sql = (self.q_truncate, q_copy_with_options)
         else:
-            sql = (q_copy_with_options)
+            sql = (q_copy_with_options, )
         parameters = {
             'arn': S.Literal(arn),
             'schema': S.Identifier(schema),
             'table': S.Identifier(table),
             's3path': S.Literal(s3path),
-            'region': S.Literal(region)
+            'region': S.Literal(region),
+            'jsonpath': S.Literal(jsonpath)
         }
         super(RedshiftCopyFromS3, self).__init__(redshift_conn_id=redshift_conn_id, sql=sql, parameters=parameters, *args, **kwargs)
         pass
@@ -183,5 +185,5 @@ class RedshiftUpsert(RedshiftOperator):
             'stage': S.Identifier("".join([stageprefix, table])),
             'query': S.SQL(query.strip(';'))
         }
-        super(RedshiftUpsert, self).__init__(redshift_conn_id==redshift_conn_id, sql=self.q_all, parameters = params, *args, **kwargs)
+        super(RedshiftUpsert, self).__init__(redshift_conn_id=redshift_conn_id, sql=self.q_all, parameters = params, *args, **kwargs)
 
