@@ -353,7 +353,7 @@ class Ec2CurlGet(Ec2BashExecutor):
 
     @apply_defaults
     def __init__(self, aws_conn_id, tag_key, tag_value, url, filename, parameters=None, sleep=3, retry=20, *args, **kwargs):
-        base_call = """curl -X GET {url} -o {filename}"""
+        base_call = """curl -X GET "{url}" -o {filename}"""
         complete_url = url + '?' + "&".join([f"{k}={parameters[k]}" for k in parameters])
         sh = base_call.format(url=complete_url, filename=filename)
         super(Ec2CurlGet, self).__init__(aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, sh=sh, sleep=sleep, retry=retry, *args, **kwargs)
