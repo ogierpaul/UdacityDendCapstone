@@ -49,6 +49,8 @@ def read_instructions(s,  file_ending=('.sql'), file_split=';', file_comment='-'
 
 class RedshiftOperator(BaseOperator):
     ui_color = "#ffc6ff"
+    template_fields = ('sql', )
+    template_ext = ('.sql')
 
     @apply_defaults
     def __init__(self, redshift_conn_id, sql, parameters=None, file_directory=None, *args, **kwargs):

@@ -47,3 +47,5 @@ if __name__ == '__main__':
         "s3_key_marches": 'staging/decp_marches',
         "s3_key_titulaires": 'staging/decp_titulaires'
     })
+    Variable.set("test_schema_name", "staging")
+    Variable.set("test_table_name", "cpv_attributes")
