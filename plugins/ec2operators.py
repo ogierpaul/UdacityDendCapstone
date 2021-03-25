@@ -323,7 +323,6 @@ class Ec2BashExecutor(BaseEc2Operator):
     def execute(self, context):
         self.log.info("Starting Execution of Ec2 BashOperator")
         self.log.info(f"TAG_KEY {self.tag_key} TAG_VALUE {self.tag_value}")
-        self.log.info(f"parameters : {str(self.params_sql)}")
         if len(self._filter_per_tag_per_status(state='available')) == 0:
             self.log.error(f"No instance available")
             raise ConnectionError("No instance available")
@@ -331,10 +330,6 @@ class Ec2BashExecutor(BaseEc2Operator):
             InstanceId = self._filter_per_tag_per_status(state='available')[0]
             assert isinstance(InstanceId, str)
             for q in self.sh:
-                # if not self.params is None:
-                #     qf = q.format(**self.params)
-                # else:
-                #     qf = q
                 self.log.info(f"Sending command:\n{q}")
                 o = self._send_single_command(q, InstanceId)
                 if o != 'Success':
