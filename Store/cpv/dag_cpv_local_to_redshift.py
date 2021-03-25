@@ -2,7 +2,6 @@ from datetime import timedelta
 # The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from ec2operators import Ec2BashExecutor, BaseEc2Operator, Ec2Creator, Ec2Terminator
 from s3uploader import S3UploadFromLocal
 # from airflow.operators.postgres_operator import PostgresOperator
 # from airflow.operators.s3_to_redshift_operator import S3ToRedshiftTransfer
@@ -63,9 +62,9 @@ with DAG(
     upload_cpv_to_s3 = S3UploadFromLocal(
         task_id='Upload_config_titulaires',
         dag=dag,
-        fp=dag_folder + cpv_config['csvname'],
+        fn=dag_folder + cpv_config['csvname'],
         s3_bucket=s3_bucket,
-        s3_key=s3_key + '/cpv_attributes.csv',
+        s3_folder=s3_key + '/cpv_attributes.csv',
     )
 
     create_redshift = RedshiftOperator(
@@ -91,7 +90,7 @@ with DAG(
     upsert_datalake = RedshiftUpsert(task_id='upsert_datalake',
                                      dag=dag,
                                      pkey="codecpv",
-                                     query="SELECT * FROM staging.cpv_attributes;",
+                                     sql="SELECT * FROM staging.cpv_attributes;",
                                      table="cpv_attributes",
                                      schema="datalake")
 

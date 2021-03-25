@@ -77,7 +77,7 @@ with DAG(
 
     prepare_ec2 = Ec2BashExecutor(
         task_id='prepare_ec2',
-        sh=os.path.join(dag_folder, '1_prepare_ec2.sh')
+        bash=os.path.join(dag_folder, '1_prepare_ec2.sh')
     )
 
     api_get = Ec2CurlGet(
@@ -90,7 +90,7 @@ with DAG(
 
     copy_to_s3 = Ec2BashExecutor(
         task_id='copy_to_s3',
-        sh=os.path.join(dag_folder, '3_copy_to_s3.sh'),
+        bash=os.path.join(dag_folder, '3_copy_to_s3.sh'),
         parameters=infogreffe_config,
         sleep=10,
         retry=20
@@ -105,7 +105,7 @@ with DAG(
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
         sql=os.path.join(dag_folder, '5_infogreffe_create_redshift.sql'),
-        file_directory=dag_folder
+        working_dir=dag_folder
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
@@ -122,7 +122,7 @@ with DAG(
     upsert_datalake = RedshiftUpsert(task_id='upsert_datalake',
                                      redshift_conn_id='aa_redshift',
                                      pkey="siren",
-                                     query="SELECT * FROM staging.infogreffe_attributes",
+                                     sql="SELECT * FROM staging.infogreffe_attributes",
                                      table="siren_attributes",
                                      schema="datalake")
 

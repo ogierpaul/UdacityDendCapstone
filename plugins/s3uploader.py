@@ -4,32 +4,38 @@ from airflow.utils.decorators import apply_defaults
 from airflow.providers.amazon.aws.hooks.base_aws import AwsBaseHook
 import boto3
 from botocore.exceptions import ClientError
-
+import os
 
 class S3UploadFromLocal(BaseOperator):
-    ui_color = "#9bf6ff"
+    ui_color = "#9bf6ff",
+    template_fields = ('working_dir', 'fn', 's3_bucket',  's3_folder',)
 
     @apply_defaults
-    def __init__(self, aws_conn_id, fp, s3_bucket, s3_key, *args, **kwargs):
+    def __init__(self, aws_conn_id, working_dir, fn, s3_bucket, s3_folder, region_name='eu-central-1', *args, **kwargs):
         super(S3UploadFromLocal, self).__init__(*args, **kwargs)
         self.aws_conn_id = aws_conn_id
-        self.aws_hook = AwsBaseHook(aws_conn_id=aws_conn_id, client_type='s3')
-        self.region_name = 'eu-central-1'
-        self.aws_credentials = self.aws_hook.get_credentials()
-        self.aws_access_key_id = self.aws_credentials.access_key
-        self.aws_secret_access_key = self.aws_credentials.secret_key
-        self.s3client = boto3.client('s3',
-                                     region_name=self.region_name,
-                                     aws_access_key_id=self.aws_access_key_id,
-                                     aws_secret_access_key=self.aws_secret_access_key)
+        self.region_name = region_name
         self.s3_bucket = s3_bucket
-        self.s3_key = s3_key
-        self.fp = fp
+        self.s3_folder = s3_folder
+        self.working_dir = working_dir
+        self.fn = fn
 
     def execute(self, context):
+        aws_hook = AwsBaseHook(aws_conn_id=self.aws_conn_id, client_type='s3')
+        aws_credentials = aws_hook.get_credentials()
+        aws_access_key_id = aws_credentials.access_key
+        aws_secret_access_key = aws_credentials.secret_key
+        s3client = boto3.client('s3',
+                                     region_name=self.region_name,
+                                     aws_access_key_id=aws_access_key_id,
+                                     aws_secret_access_key=aws_secret_access_key)
         try:
-            response = self.s3client.upload_file(self.fp, self.s3_bucket, self.s3_key)
-            self.log.info(f'{self.fp} uploaded to s3://{self.s3_bucket}/{self.s3_key}')
+            self.fp = os.path.join(self.working_dir, self.fn)
+            s3_key = self.s3_folder + self.fn
+            s3_path = 's3://' + self.s3_bucket + s3_key
+            self.log.info(f'uploading {self.fp}  to {s3_path}')
+            response = s3client.upload_file(self.fp, self.s3_bucket, s3_key)
+            self.log.info(response)
         except ClientError as e:
             self.log.error(e)
             raise ClientError(e)

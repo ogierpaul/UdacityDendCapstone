@@ -1,1 +1,0 @@
-SELECT * FROM {{ var.value.test_schema_name }}.{{ var.value.test_table_name }} LIMIT 5;

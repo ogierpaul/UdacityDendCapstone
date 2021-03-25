@@ -41,7 +41,7 @@ with DAG(
 ) as dag:
     execute_script = Ec2BashExecutor(
         task_id='copy_to_s3',
-        sh=os.path.join(dag_folder, '3_copy_to_s3.sh'),
+        bash=os.path.join(dag_folder, '3_copy_to_s3.sh'),
         parameters=infogreffe_config,
         sleep=10,
         retry=20

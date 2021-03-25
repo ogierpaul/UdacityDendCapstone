@@ -1,0 +1,1 @@
+SELECT * FROM staging.decp_titulaires;

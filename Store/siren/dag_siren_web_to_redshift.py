@@ -77,13 +77,13 @@ with DAG(
     prepare_ec2 = Ec2BashExecutor(
         task_id='prepare_ec2',
         dag=dag,
-        sh=os.path.join(dag_folder, '1_siren_ec2_init.sh')
+        bash=os.path.join(dag_folder, '1_siren_ec2_init.sh')
     )
 
     download_from_web = Ec2BashExecutor(
         task_id='download_from_web',
         dag=dag,
-        sh=os.path.join(dag_folder, '2_siren_web_download.sh'),
+        bash=os.path.join(dag_folder, '2_siren_web_download.sh'),
         parameters=siren_config,
         sleep=5,
         retry=20
@@ -92,7 +92,7 @@ with DAG(
     copy_to_s3 = Ec2BashExecutor(
         task_id='copy_to_s3',
         dag=dag,
-        sh=os.path.join(dag_folder, '3_copy_to_s3.sh'),
+        bash=os.path.join(dag_folder, '3_copy_to_s3.sh'),
         parameters=siren_config,
         sleep=10,
         retry=20
@@ -109,7 +109,7 @@ with DAG(
         task_id='create_redshift',
         dag=dag,
         sql='4_create_redshift.sql',
-        file_directory=dag_folder
+        working_dir=dag_folder
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
@@ -128,7 +128,7 @@ with DAG(
                                      dag=dag,
                                      redshift_conn_id='aa_redshift',
                                      pkey="siren",
-                                     query="SELECT * FROM staging.siren_attributes",
+                                     sql="SELECT * FROM staging.siren_attributes",
                                      table="siren_attributes",
                                      schema="datalake")
 

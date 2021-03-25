@@ -45,14 +45,23 @@
 - `dict` in the dag file
 - contains parameters of the EC2 machine to be created
 
-### DECP Config
-- `dict` in the dag file
-- contains information on the bucket where to stage the files
-- And the url to download the data
+### Airflow Variables
+- `s3_bucket` : contains information on the bucket where to stage the files
+- `decp_url`: url to download the data
+- `arn`: ARN identifier of the role to be assumed by Redshift to `COPY` the file from S3
+
+### Airflow connections
+- `aa_redshift` : Postgres Connection
+- `aws_credentials`: AWS Connection
 
 ### Code
-#### 1_download_from_web
+#### jq_marches.sh and jq_titulaires.sh
+- List of `jq` instructions to parse the raw json data
+
+#### ec2_commands.sh
 - Contains a series of bash statements to be executed by the EC2 machine
 
-#### 2_transform_in_redshift
-- Contains SQL statements to be executed by Redshift
+#### 2_select_unique_(marches, titulaires).sql
+- Contains SQL statements selecting unique lines from the staging tables
+- Removing duplicates on the data to be `UPSERT`
+ 

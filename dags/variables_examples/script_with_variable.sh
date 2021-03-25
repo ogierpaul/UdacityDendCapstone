@@ -1,1 +1,0 @@
-echo {{ var.value.test_table_name }}

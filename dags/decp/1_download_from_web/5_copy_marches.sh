@@ -1,1 +1,0 @@
-aws s3 cp /home/ec2-user/decp/decp_marches.json s3://{bucket}/staging/decp_marches/decp_marches.json

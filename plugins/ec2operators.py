@@ -2,33 +2,51 @@ import boto3
 from airflow.models.baseoperator import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from airflow.providers.amazon.aws.hooks.base_aws import AwsBaseHook
+from airflow.configuration import conf
 import time
-
+import os
+import airflow.providers.postgres.operators.postgres
 
 class BaseEc2Operator(BaseOperator):
+    template_fields = ('tag_key', 'tag_value')
+
     @apply_defaults
-    def __init__(self, aws_conn_id, tag_key, tag_value, retry=10, sleep=10, *args, **kwargs):
+    def __init__(self, aws_conn_id, tag_key, tag_value, retry=10, sleep=10, region_name='eu-central-1', *args,
+                 **kwargs):
         super(BaseEc2Operator, self).__init__(*args, **kwargs)
         self.aws_conn_id = aws_conn_id
-        self.aws_hook = AwsBaseHook(aws_conn_id=aws_conn_id, client_type='ec2')
-        self.region_name = 'eu-central-1'
-        self.aws_credentials = self.aws_hook.get_credentials()
-        self.aws_access_key_id = self.aws_credentials.access_key
-        self.aws_secret_access_key = self.aws_credentials.secret_key
-        self.ecc = boto3.client('ec2',
-                                region_name=self.region_name,
-                                aws_access_key_id=self.aws_access_key_id,
-                                aws_secret_access_key=self.aws_secret_access_key
-                                )
-        self.ecr = boto3.resource('ec2',
-                                  region_name=self.region_name,
-                                  aws_access_key_id=self.aws_access_key_id,
-                                  aws_secret_access_key=self.aws_secret_access_key
-                                  )
+        self.region_name = region_name
         self.tag_key = tag_key
         self.tag_value = tag_value
         self.retry = retry
         self.sleep = sleep
+
+    def _get_hook(self):
+        return AwsBaseHook(aws_conn_id=self.aws_conn_id, client_type='ec2')
+
+    def _get_ecc(self):
+        aws_hook = self._get_hook()
+        aws_credentials = aws_hook.get_credentials()
+        aws_access_key_id = aws_credentials.access_key
+        aws_secret_access_key = aws_credentials.secret_key
+        ecc = boto3.client('ec2',
+                           region_name=self.region_name,
+                           aws_access_key_id=aws_access_key_id,
+                           aws_secret_access_key=aws_secret_access_key
+                           )
+        return ecc
+
+    def _get_ecr(self):
+        aws_hook = self._get_hook()
+        aws_credentials = aws_hook.get_credentials()
+        aws_access_key_id = aws_credentials.access_key
+        aws_secret_access_key = aws_credentials.secret_key
+        ecr = boto3.resource('ec2',
+                             region_name=self.region_name,
+                             aws_access_key_id=aws_access_key_id,
+                             aws_secret_access_key=aws_secret_access_key
+                             )
+        return ecr
 
     def _filter_per_tag(self):
         """
@@ -43,7 +61,8 @@ class BaseEc2Operator(BaseOperator):
             "Name": f"tag:{self.tag_key}",
             "Values": [self.tag_value]
         }]
-        props = self.ecc.describe_instances(Filters=query)['Reservations']
+        ecc = self._get_ecc()
+        props = ecc.describe_instances(Filters=query)['Reservations']
         if len(props) > 0:
             res = [i['Instances'][0]['InstanceId'] for i in props]
         else:
@@ -61,7 +80,8 @@ class BaseEc2Operator(BaseOperator):
 
         """
         assert isinstance(Instanceid, str)
-        out = self.ecc.describe_instance_status(InstanceIds=[Instanceid], IncludeAllInstances=True)
+        ecc = self._get_ecc()
+        out = ecc.describe_instance_status(InstanceIds=[Instanceid], IncludeAllInstances=True)
         props = out['InstanceStatuses'][0]
         instance_status = props['InstanceStatus']['Status']
         system_status = props['SystemStatus']['Status']
@@ -131,7 +151,8 @@ class Ec2Creator(BaseEc2Operator):
         Returns:
             boto3.instance
         """
-        new_instance = self.ecr.create_instances(
+        ecr = self._get_ecr()
+        new_instance = ecr.create_instances(
             ImageId=self.ImageId,
             KeyName=self.KeyName,
             InstanceType=self.InstanceType,
@@ -157,6 +178,7 @@ class Ec2Creator(BaseEc2Operator):
         res_id = None
         # Loop (retry) times while waiting (sleep) secondes between each loop
         # Loop until either max number of tries has been done, or an available instance has been found
+        ecr = self._get_ecr()
         while n <= self.retry and res_id is None:
             n += 1
             # 2. Get the list of instances matching the tag_key and tag_value
@@ -182,7 +204,7 @@ class Ec2Creator(BaseEc2Operator):
             # 3.2. If there is a stopped instance, restart it, and wait (sleep) seconds, this will become available in next loop
             elif len(stopped_instances) > 0:
                 i_id = stopped_instances[0][0]
-                self.ecr.instances.filter(InstanceIds=[i_id]).start()
+                ecr.instances.filter(InstanceIds=[i_id]).start()
                 self.log.info(f"restart instance {i_id}")
                 time.sleep(self.start_sleep)
             # 3.3. If there is a pending (rebooting, modifying...) instance: wait (sleep) secondes
@@ -209,23 +231,33 @@ class Ec2Creator(BaseEc2Operator):
 
 class Ec2BashExecutor(BaseEc2Operator):
     ui_color = "#ffd6a5"
-    # template_fields = ('sh', )
-    # template_ext = ('.sh', )
+    template_fields = ('sh', 'tag_key', 'tag_value', 'params')
+    template_ext = ('.sh', )
 
     @apply_defaults
-    def __init__(self, aws_conn_id, tag_key, tag_value, sh, retry=10, sleep=3, parameters=None, *args, **kwargs):
+    def __init__(self, aws_conn_id, tag_key, tag_value, bash, working_dir=None, retry=10, sleep=3, *args, **kwargs):
         super(Ec2BashExecutor, self).__init__(
             aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, retry=retry, sleep=sleep, *args, **kwargs
         )
-        self.sh = self._read_commands(sh)
-        self.ssm = boto3.client('ssm',
-                                region_name=self.region_name,
-                                aws_access_key_id=self.aws_access_key_id,
-                                aws_secret_access_key=self.aws_secret_access_key
-                                )
-        self.parameters = parameters
+        if working_dir is None:
+            self.working_dir = os.path.abspath(conf.get('CORE', 'dags_folder'))
+        else:
+            self.working_dir = os.path.abspath(working_dir)
+        self.sh = self._read_commands(input=bash, folder=working_dir)
 
-    def _read_commands(self, input):
+    def _get_ssm(self):
+        aws_hook = self._get_hook()
+        aws_credentials = aws_hook.get_credentials()
+        aws_access_key_id = aws_credentials.access_key
+        aws_secret_access_key = aws_credentials.secret_key
+        ssm = boto3.client('ssm',
+                           region_name=self.region_name,
+                           aws_access_key_id=aws_access_key_id,
+                           aws_secret_access_key=aws_secret_access_key
+                           )
+        return ssm
+
+    def _read_commands(self, input, folder=None):
         """
 
         :param input:
@@ -234,7 +266,8 @@ class Ec2BashExecutor(BaseEc2Operator):
         commands_unformatted = []
         if isinstance(input, str):
             if input.endswith('.sh'):
-                f = open(input, 'r')
+                fp = os.path.join(self.working_dir, input)
+                f = open(fp, 'r')
                 commands_unformatted = f.read().split('\n')
                 f.close()
             else:
@@ -251,7 +284,8 @@ class Ec2BashExecutor(BaseEc2Operator):
         return commands_stripped
 
     def _send_single_command(self, q, InstanceId):
-        response = self.ssm.send_command(
+        ssm = self._get_ssm()
+        response = ssm.send_command(
             InstanceIds=[InstanceId],
             DocumentName='AWS-RunShellScript',
             Parameters={"commands": [q]}
@@ -264,7 +298,7 @@ class Ec2BashExecutor(BaseEc2Operator):
         status = "Waiting Status"
         while n < self.retry and finished is False:
             n += 1
-            output = self.ssm.get_command_invocation(
+            output = ssm.get_command_invocation(
                 CommandId=command_id,
                 InstanceId=InstanceId
             )
@@ -289,7 +323,7 @@ class Ec2BashExecutor(BaseEc2Operator):
     def execute(self, context):
         self.log.info("Starting Execution of Ec2 BashOperator")
         self.log.info(f"TAG_KEY {self.tag_key} TAG_VALUE {self.tag_value}")
-        self.log.info(f"parameters : {str(self.parameters)}")
+        self.log.info(f"parameters : {str(self.params_sql)}")
         if len(self._filter_per_tag_per_status(state='available')) == 0:
             self.log.error(f"No instance available")
             raise ConnectionError("No instance available")
@@ -297,12 +331,12 @@ class Ec2BashExecutor(BaseEc2Operator):
             InstanceId = self._filter_per_tag_per_status(state='available')[0]
             assert isinstance(InstanceId, str)
             for q in self.sh:
-                if not self.parameters is None:
-                    qf = q.format(**self.parameters)
-                else:
-                    qf = q
-                self.log.info(f"Sending command:\n{qf}")
-                o = self._send_single_command(qf, InstanceId)
+                # if not self.params is None:
+                #     qf = q.format(**self.params)
+                # else:
+                #     qf = q
+                self.log.info(f"Sending command:\n{q}")
+                o = self._send_single_command(q, InstanceId)
                 if o != 'Success':
                     self.log.error(f"Command failed status:{o}")
                     raise ChildProcessError(f"Command failed status:{o}")
@@ -312,6 +346,7 @@ class Ec2BashExecutor(BaseEc2Operator):
 
 class Ec2Terminator(BaseEc2Operator):
     ui_color = "#bdb2ff"
+
     @apply_defaults
     def __init__(self, aws_conn_id, tag_key, tag_value, terminate='stop', retry=10, sleep=20, *args, **kwargs):
         super(Ec2Terminator, self).__init__(
@@ -322,6 +357,7 @@ class Ec2Terminator(BaseEc2Operator):
     def execute(self, context):
         self.log.info(f"Executing Operator Ec2Terminator")
         self.log.info(f"TAG_KEY {self.tag_key} TAG_VALUE {self.tag_value}")
+        ecr = self._get_ecr()
         InstanceIds = self._filter_per_tag_per_status(state='available')
         if len(InstanceIds) > 0:
             self.log.info(f"Available Instances found : {'; '.join(InstanceIds)}")
@@ -334,9 +370,9 @@ class Ec2Terminator(BaseEc2Operator):
                 self.log.info(f"Try {n} of {self.retry}: Available Instances found : {'; '.join(InstanceIds)}")
                 if len(active_instances) > 0:
                     if self.terminate == 'terminate':
-                        m = self.ecr.instances.filter(InstanceIds=active_instances).terminate()
+                        m = ecr.instances.filter(InstanceIds=active_instances).terminate()
                     else:
-                        m = self.ecr.instances.filter(InstanceIds=active_instances).stop()
+                        m = ecr.instances.filter(InstanceIds=active_instances).stop()
                     time.sleep(self.sleep)
                 else:
                     break
@@ -347,13 +383,15 @@ class Ec2Terminator(BaseEc2Operator):
         self.log.info(f"Final Instances found:\n{s.join(all_instances_status)}")
         self.log.info("END OF EXECUTION")
 
-
-class Ec2CurlGet(Ec2BashExecutor):
-    ui_color = "#e76f51"
-
-    @apply_defaults
-    def __init__(self, aws_conn_id, tag_key, tag_value, url, filename, parameters=None, sleep=3, retry=20, *args, **kwargs):
-        base_call = """curl -X GET "{url}" -o {filename}"""
-        complete_url = url + '?' + "&".join([f"{k}={parameters[k]}" for k in parameters])
-        sh = base_call.format(url=complete_url, filename=filename)
-        super(Ec2CurlGet, self).__init__(aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, sh=sh, sleep=sleep, retry=retry, *args, **kwargs)
+#
+# class Ec2CurlGet(Ec2BashExecutor):
+#     ui_color = "#e76f51"
+#
+#     @apply_defaults
+#     def __init__(self, aws_conn_id, tag_key, tag_value, url, filename, parameters=None, sleep=3, retry=20, *args,
+#                  **kwargs):
+#         base_call = """curl -X GET "{url}" -o {filename}"""
+#         complete_url = url + '?' + "&".join([f"{k}={parameters[k]}" for k in parameters])
+#         #TODO: review sh = base_call.format(url=complete_url, filename=filename)
+#         super(Ec2CurlGet, self).__init__(aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, sh=sh,
+#                                          sleep=sleep, retry=retry, *args, **kwargs)
