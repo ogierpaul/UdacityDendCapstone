@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS staging.cpv_attributes;
-
 CREATE TABLE IF NOT EXISTS staging.cpv_attributes (
     codecpv VARCHAR(8) PRIMARY KEY,
     description VARCHAR

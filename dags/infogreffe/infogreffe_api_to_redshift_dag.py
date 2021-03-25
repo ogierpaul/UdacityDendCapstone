@@ -23,7 +23,7 @@ default_args = {
     'region_name': 'eu-central-1',
     'autocommit': True,
     'tag_key': 'Stream',
-    'tag_value': 'Siren',
+    'tag_value': 'Siren', #TODO: Review
     'execution_timeout': timedelta(seconds=300),
     's3_bucket': Variable.get('s3_bucket'),
     'arn': Variable.get('arn'),
@@ -40,21 +40,21 @@ ec2_config = {
 }
 
 with DAG(
-    'siren_from_web_to_redshift',
+    'infogreffe_from_web_to_redshift',
     default_args=default_args,
-    description='Download the Siren File from the web to Redshift',
+    description='Download the Infogreffe File from the API to Redshift',
     schedule_interval=None,
-    tags=['dend', 'siren']
+    tags=['dend', 'infogreffe']
 ) as dag:
     _docs_md_fp = os.path.join(default_args['working_dir'], 'Readme.md')
     dag.doc_md = open(_docs_md_fp, 'r').read()
 
-    start_siren = DummyOperator(
-        task_id='start_siren'
+    start_infogreffe = DummyOperator(
+        task_id='start_infogreffe'
     )
 
-    stop_siren = DummyOperator(
-        task_id='stop_siren'
+    stop_infogreffe = DummyOperator(
+        task_id='stop_infogreffe'
     )
 
     create_ec2_if_not_exists = Ec2Creator(
@@ -62,9 +62,9 @@ with DAG(
         **ec2_config
     )
 
-    download_from_web_to_s3 = Ec2BashExecutor(
-        task_id='download_from_web_to_s3',
-        bash='1_siren_ec2_instructions.sh',
+    download_from_api_to_s3 = Ec2BashExecutor(
+        task_id='download_from_api_to_s3',
+        bash='1_ec2_instructions.sh',
         sleep=5,
         retry=30
     )
@@ -83,21 +83,21 @@ with DAG(
 
     copy_from_s3 = RedshiftCopyFromS3(
         task_id='copy_from_s3',
-        s3_folder='staging/siren_attributes',
-        fn=Variable.get('siren_csvname'),
+        s3_folder='staging/infogreffe_attributes',
+        fn=Variable.get('infogreffe_csvname'),
         schema='staging',
-        table='siren_attributes',
+        table='infogreffe_attributes',
         format='csv',
         header=True,
-        delimiter=','
+        delimiter=';'
     )
     upsert_datalake = RedshiftUpsert(
         task_id='upsert_datalake',
         schema="datalake",
         table="siren_attributes",
         pkey="siren",
-        sql="SELECT * FROM staging.siren_attributes"
+        sql="SELECT * FROM staging.infogreffe_attributes" #TODO: Review if no duplicates
     )
 
-    start_siren >> create_ec2_if_not_exists >> download_from_web_to_s3>> stop_ec2
-    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_siren
+    start_infogreffe >> create_ec2_if_not_exists >> download_from_api_to_s3 >> stop_ec2
+    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_infogreffe

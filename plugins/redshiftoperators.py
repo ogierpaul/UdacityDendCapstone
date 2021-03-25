@@ -55,7 +55,7 @@ class RedshiftOperator(BaseOperator):
     template_ext = ('.sql', )
 
     @apply_defaults
-    def __init__(self, redshift_conn_id, sql, params_sql, working_dir=None, *args, **kwargs):
+    def __init__(self, redshift_conn_id, sql, params_sql=None, working_dir=None, *args, **kwargs):
         self.working_dir = working_dir
         self.redshift_conn_id = redshift_conn_id
         super(RedshiftOperator, self).__init__(*args, **kwargs)
