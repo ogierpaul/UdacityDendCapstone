@@ -49,7 +49,7 @@ with DAG(
 
     upload_cpv_to_s3 = S3UploadFromLocal(
         task_id='Upload_cpv_to_s3s',
-        s3_folder='staging/cpv_attributes'
+        s3_folder='staging/cpv_attributes/'
     )
 
     create_redshift = RedshiftOperator(

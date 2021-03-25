@@ -12,9 +12,10 @@ sleep 10
 echo Unzipping siren
 unzip -o /home/ec2-user/siren/siren.zip
 sleep 30
+echo $(ls)
 # Go to home directory and copy
 echo Copy siren to s3
-aws s3 cp /home/ec2-user/siren/{{ var.value.siren_csvname }} s3://{{ var.value.s3_bucket }}/staging/siren_attributes/{{ var.value.siren_csvname }}
+aws s3 cp  /home/ec2-user/siren/{{ var.value.siren_csvname }}   s3://{{ var.value.s3_bucket }}/staging/siren_attributes/{{ var.value.siren_csvname }}
 
 # Clean up
 echo Cleaning EC2

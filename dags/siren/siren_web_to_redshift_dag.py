@@ -46,58 +46,64 @@ with DAG(
     schedule_interval=None,
     tags=['dend', 'siren']
 ) as dag:
-    _docs_md_fp = os.path.join(default_args['working_dir'], 'Readme.md')
-    dag.doc_md = open(_docs_md_fp, 'r').read()
-
-    start_siren = DummyOperator(
-        task_id='start_siren'
-    )
-
-    stop_siren = DummyOperator(
-        task_id='stop_siren'
-    )
-
-    create_ec2_if_not_exists = Ec2Creator(
-        task_id='create_ec2_if_not_exists',
-        **ec2_config
-    )
-
-    download_from_web_to_s3 = Ec2BashExecutor(
-        task_id='download_from_web_to_s3',
-        bash='1_siren_ec2_instructions.sh',
+    # _docs_md_fp = os.path.join(default_args['working_dir'], 'Readme.md')
+    # dag.doc_md = open(_docs_md_fp, 'r').read()
+    #
+    # start_siren = DummyOperator(
+    #     task_id='start_siren'
+    # )
+    #
+    # stop_siren = DummyOperator(
+    #     task_id='stop_siren'
+    # )
+    #
+    # create_ec2_if_not_exists = Ec2Creator(
+    #     task_id='create_ec2_if_not_exists',
+    #     **ec2_config
+    # )
+    #
+    # download_from_web_to_s3 = Ec2BashExecutor(
+    #     task_id='download_from_web_to_s3',
+    #     bash='1_siren_ec2_instructions.sh',
+    #     sleep=5,
+    #     retry=30
+    # )
+    #
+    # stop_ec2 = Ec2Terminator(
+    #     task_id='stop_ec2',
+    #     terminate='stop',
+    #     #TODO: Remove trigger_rule='all_done'
+    # )
+    #
+    # create_redshift = RedshiftOperator(
+    #     task_id='create_redshift',
+    #     dag=dag,
+    #     sql='2_create_redshift.sql'
+    # )
+    #
+    # copy_from_s3 = RedshiftCopyFromS3(
+    #     task_id='copy_from_s3',
+    #     s3_folder='staging/siren_attributes',
+    #     fn=Variable.get('siren_csvname'),
+    #     schema='staging',
+    #     table='siren_attributes',
+    #     format='csv',
+    #     header=True,
+    #     delimiter=','
+    # )
+    # upsert_datalake = RedshiftUpsert(
+    #     task_id='upsert_datalake',
+    #     schema="datalake",
+    #     table="siren_attributes",
+    #     pkey="siren",
+    #     sql="SELECT * FROM staging.siren_attributes"
+    # )
+    #
+    # start_siren >> create_ec2_if_not_exists >> download_from_web_to_s3>> stop_ec2
+    # stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_siren
+    test = Ec2BashExecutor(
+        task_id='test',
+        bash='2_test.sh',
         sleep=5,
         retry=30
     )
-
-    stop_ec2 = Ec2Terminator(
-        task_id='stop_ec2',
-        terminate='stop',
-        #TODO: Remove trigger_rule='all_done'
-    )
-
-    create_redshift = RedshiftOperator(
-        task_id='create_redshift',
-        dag=dag,
-        sql='2_create_redshift.sql'
-    )
-
-    copy_from_s3 = RedshiftCopyFromS3(
-        task_id='copy_from_s3',
-        s3_folder='staging/siren_attributes',
-        fn=Variable.get('siren_csvname'),
-        schema='staging',
-        table='siren_attributes',
-        format='csv',
-        header=True,
-        delimiter=','
-    )
-    upsert_datalake = RedshiftUpsert(
-        task_id='upsert_datalake',
-        schema="datalake",
-        table="siren_attributes",
-        pkey="siren",
-        sql="SELECT * FROM staging.siren_attributes"
-    )
-
-    start_siren >> create_ec2_if_not_exists >> download_from_web_to_s3>> stop_ec2
-    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_siren

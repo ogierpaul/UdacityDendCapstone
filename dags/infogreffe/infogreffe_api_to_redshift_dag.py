@@ -89,7 +89,7 @@ with DAG(
         table='infogreffe_attributes',
         format='csv',
         header=True,
-        delimiter=';'
+        delimiter=';' #TODO: Review columns / delimiter
     )
     upsert_datalake = RedshiftUpsert(
         task_id='upsert_datalake',

@@ -71,7 +71,10 @@ class RedshiftOperator(BaseOperator):
         self.params_sql = params_sql
 
     def execute(self, context=None):
-        commands_formatted = [S.SQL(q).format(**self.params_sql) for q in self.commands_stripped]
+        if self.params_sql is not None:
+            commands_formatted = [S.SQL(q).format(**self.params_sql) for q in self.commands_stripped]
+        else:
+            commands_formatted = [S.SQL(q) for q in self.commands_stripped]
         hook = PostgresHook(postgres_conn_id=self.redshift_conn_id)
         for qf in commands_formatted:
             self.log.info("Executing Query:{}".format(qf.as_string(hook.get_conn())))

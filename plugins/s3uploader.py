@@ -32,7 +32,7 @@ class S3UploadFromLocal(BaseOperator):
         try:
             self.fp = os.path.join(self.working_dir, self.fn)
             s3_key = self.s3_folder + self.fn
-            s3_path = 's3://' + self.s3_bucket + s3_key
+            s3_path = 's3://' + self.s3_bucket.rstrip('/') +'/' + s3_key
             self.log.info(f'uploading {self.fp}  to {s3_path}')
             response = s3client.upload_file(self.fp, self.s3_bucket, s3_key)
             self.log.info(response)
