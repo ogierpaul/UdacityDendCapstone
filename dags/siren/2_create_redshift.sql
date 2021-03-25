@@ -1,6 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS staging;
-CREATE SCHEMA IF NOT EXISTS datalake;
-
 CREATE TABLE IF NOT EXISTS staging.siren_attributes(
     siren                                     VARCHAR(256) PRIMARY KEY ,
     statutDiffusionUniteLegale                VARCHAR(256),

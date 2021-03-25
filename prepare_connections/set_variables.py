@@ -13,6 +13,8 @@ if __name__ == '__main__':
     Variable.set("tag_value_dec", "decp")
     Variable.set("s3_bucket", "paulogiereucentral1")
     Variable.set("decp_url", 'https://www.data.gouv.fr/fr/datasets/r/16962018-5c31-4296-9454-5998585496d2')
+    Variable.set("siren_url", 'https://www.data.gouv.fr/en/datasets/r/573067d3-f43d-4634-9664-675277b81857')
+    Variable.set("siren_csvname", 'StockUniteLegale_utf8.csv')
     Variable.set("ec2_config_base", {
         'ImageId': 'ami-0de9f803fcac87f46',
         'InstanceType': 't2.medium',
@@ -22,13 +24,6 @@ if __name__ == '__main__':
         'start_sleep': 60
     }
                  )
-    Variable.set(
-        "config_siren", {
-            'url': 'https://www.data.gouv.fr/en/datasets/r/573067d3-f43d-4634-9664-675277b81857',
-            'filename': 'StockUniteLegale_utf8.csv',
-            's3_key': 'staging/siren_attributes/'
-        }
-    )
     Variable.set(
         "config_cpv", {
             'filename': 'cpv_2008_ver_2013.csv',

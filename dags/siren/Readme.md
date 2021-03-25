@@ -7,7 +7,7 @@
 - The downloaded file is a compressed zipped csv
 
 ### Target description: Redshift table
-- The target is a table in the datalake, `siren_attribtues`
+- The target is a table in the datalake, `siren_attributes`
 
 ### Dag Steps:
 - To ingest it in Redshift, the raw zipped file has to be:
@@ -29,3 +29,25 @@
 - `TRUNCATE` the staging table
 - `COPY` the csv file from S3
 - `INSERT INTO` the datalake
+
+## Dags Parameters and code
+### EC2 Config
+- `dict` in the dag file
+- contains parameters of the EC2 machine to be created
+
+### Airflow Variables
+- `s3_bucket` : contains information on the bucket where to stage the files
+- `siren_url`: url to download the data
+- `siren_csvname`: filename of csv contained within zip file
+- `arn`: ARN identifier of the role to be assumed by Redshift to `COPY` the file from S3
+
+### Airflow connections
+- `aa_redshift` : Postgres Connection
+- `aws_credentials`: AWS Connection
+
+### Code
+#### 1_siren_ec2_instructions.sh
+- list of instructions to be executed by ec2 machine
+
+#### 2_create_redshift.sql
+- Creation of Redshift schema for this dag
