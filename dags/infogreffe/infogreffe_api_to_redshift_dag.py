@@ -49,33 +49,32 @@ with DAG(
     _docs_md_fp = os.path.join(default_args['working_dir'], 'Readme.md')
     dag.doc_md = open(_docs_md_fp, 'r').read()
 
-    start_infogreffe = DummyOperator(
-        task_id='start_infogreffe'
-    )
+    # start_infogreffe = DummyOperator(
+    #     task_id='start_infogreffe'
+    # )
+    #
+    # stop_infogreffe = DummyOperator(
+    #     task_id='stop_infogreffe'
+    # )
+    #
+    # create_ec2_if_not_exists = Ec2Creator(
+    #     task_id='create_ec2_if_not_exists',
+    #     **ec2_config
+    # )
+    #
+    # download_from_api_to_s3 = Ec2BashExecutor(
+    #     task_id='download_from_api_to_s3',
+    #     bash='1_ec2_instructions.sh',
+    #     sleep=5,
+    #     retry=30
+    # )
+    #
+    # stop_ec2 = Ec2Terminator(
+    #     task_id='stop_ec2',
+    #     terminate='stop',
+    #     #TODO: Remove trigger_rule='all_done'
+    # )
 
-    stop_infogreffe = DummyOperator(
-        task_id='stop_infogreffe'
-    )
-
-    create_ec2_if_not_exists = Ec2Creator(
-        task_id='create_ec2_if_not_exists',
-        **ec2_config
-    )
-
-    download_from_api_to_s3 = Ec2BashExecutor(
-        task_id='download_from_api_to_s3',
-        bash='1_ec2_instructions.sh',
-        sleep=5,
-        retry=30
-    )
-
-    stop_ec2 = Ec2Terminator(
-        task_id='stop_ec2',
-        terminate='stop',
-        #TODO: Remove trigger_rule='all_done'
-    )
-
-    #TODO: Review columns
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
         dag=dag,
@@ -85,7 +84,8 @@ with DAG(
     copy_from_s3 = RedshiftCopyFromS3(
         task_id='copy_from_s3',
         s3_folder='staging/infogreffe_attributes',
-        fn=Variable.get('infogreffe_csvname'),
+        #fn=Variable.get('infogreffe_csvname'), #TODO: Review
+        fn='chiffres-cles-2019.csv',
         schema='staging',
         table='infogreffe_attributes',
         format='csv',
@@ -96,10 +96,12 @@ with DAG(
     upsert_datalake = RedshiftUpsert(
         task_id='upsert_datalake',
         schema="datalake",
-        table="siren_attributes",
-        pkey="siren",
-        sql="SELECT * FROM staging.infogreffe_attributes" #TODO: Review if no duplicates
+        table="infogreffe_attributes",
+        pkey="infogreffe_uid",
+        sql="3_select_unique_infogreffe.sql"
     )
 
-    start_infogreffe >> create_ec2_if_not_exists >> download_from_api_to_s3 >> stop_ec2
-    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_infogreffe
+    # start_infogreffe >> create_ec2_if_not_exists >> download_from_api_to_s3 >> stop_ec2
+    # stop_ec2 >>
+    create_redshift >> copy_from_s3 >> upsert_datalake
+    # stop_infogreffe

@@ -1,4 +1,5 @@
 SELECT
+       infogreffe_uid,
        siren,
        millesime,
        date_de_cloture,
