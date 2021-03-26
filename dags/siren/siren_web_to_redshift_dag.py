@@ -23,7 +23,7 @@ default_args = {
     'region_name': 'eu-central-1',
     'autocommit': True,
     'tag_key': 'Stream',
-    'tag_value': 'Siren',
+    'tag_value': 'Unique',
     'execution_timeout': timedelta(seconds=300),
     's3_bucket': Variable.get('s3_bucket'),
     'arn': Variable.get('arn'),
@@ -72,7 +72,7 @@ with DAG(
     stop_ec2 = Ec2Terminator(
         task_id='stop_ec2',
         terminate='stop',
-        #TODO: Remove trigger_rule='all_done'
+        trigger_rule='all_done'
     )
 
     create_redshift = RedshiftOperator(

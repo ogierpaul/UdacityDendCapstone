@@ -24,7 +24,7 @@ default_args = {
     'region_name': 'eu-central-1',
     'autocommit': True,
     'tag_key': 'Stream',
-    'tag_value': 'Decp',
+    'tag_value': 'Unique',
     'execution_timeout': timedelta(seconds=300),
     's3_bucket': Variable.get('s3_bucket'),
     'arn': Variable.get('arn'),
