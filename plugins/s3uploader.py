@@ -1,17 +1,32 @@
 from airflow.models.baseoperator import BaseOperator
 from airflow.utils.decorators import apply_defaults
-#from airflow.contrib.hooks.aws_hook import AwsHook
 from airflow.providers.amazon.aws.hooks.base_aws import AwsBaseHook
 import boto3
 from botocore.exceptions import ClientError
 import os
 
 class S3UploadFromLocal(BaseOperator):
+    """
+    Upload a local file to S3
+    """
+
     ui_color = "#9bf6ff",
     template_fields = ('working_dir', 'fn', 's3_bucket',  's3_folder',)
 
     @apply_defaults
     def __init__(self, aws_conn_id, working_dir, fn, s3_bucket, s3_folder, region_name='eu-central-1', *args, **kwargs):
+        """
+
+        Args:
+            aws_conn_id (str): Aws Conneciton Id in Airflow
+            working_dir (str): directory where the file is located
+            fn (str): Filename
+            s3_bucket (str): bucket where to upload the file
+            s3_folder (str): folder where to upload the file
+            region_name (str): region name of S3
+            *args:
+            **kwargs:
+        """
         super(S3UploadFromLocal, self).__init__(*args, **kwargs)
         self.aws_conn_id = aws_conn_id
         self.region_name = region_name
@@ -21,6 +36,14 @@ class S3UploadFromLocal(BaseOperator):
         self.fn = fn
 
     def execute(self, context):
+        """
+        Upload the file using boto3 S3 client
+        Args:
+            context:
+
+        Returns:
+
+        """
         aws_hook = AwsBaseHook(aws_conn_id=self.aws_conn_id, client_type='s3')
         aws_credentials = aws_hook.get_credentials()
         aws_access_key_id = aws_credentials.access_key
