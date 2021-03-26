@@ -1,11 +1,22 @@
-# Infogreffe
-- Extract Information into staging area
-- Copy to Out schema
+# Write a summary recap with
+- description
+- file source
+- number of rows
+- size
+- frequency of updates
+- primary key
 
-# Create Schema
-- Review logic of creating schema with muliple tables and dropping
+# Write for each data source
+- see method
+- number of rows
+- data exploration
+- data quality issues highlighted
+- min / max
+- histogram of dates
 
-# Create views on the data
-- 1 view per query
+# Create some sample views on the data
+- 
 
-# Finally do data quality checks
+# Include references
+
+
