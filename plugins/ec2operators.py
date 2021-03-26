@@ -306,6 +306,7 @@ class Ec2BashExecutor(BaseEc2Operator):
             self.log.info(f"Try {n} of {self.retry}: status {status}")
             if status == 'Success':
                 finished = True
+                self.log.info(f"StandardOutputContent: {output['StandardOutputContent']}")
                 break
             elif status in ['Pending', 'Delayed', 'InProgress', 'Cancelling']:
                 finished = False
