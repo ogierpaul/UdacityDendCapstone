@@ -43,30 +43,30 @@ with DAG(
     )
 
     create_decp_titulaires_dwh = RedshiftOperator(
-        task_id='create_replace_decp_titulaires_dwh',
+        task_id='create_refresh_decp_titulaires_dwh',
         sql='1a_standardize_decp_titulaires.sql'
     )
 
-    create_replace_decp_marches_dwh = RedshiftOperator(
-        task_id='create_replace_decp_marches_dwh',
+    create_refresh_decp_marches_dwh = RedshiftOperator(
+        task_id='create_refresh_decp_marches_dwh',
         sql='1b_standardize_decp_marches.sql'
     )
 
-    create_replace_siren_dwh = RedshiftOperator(
-        task_id='create_replace_siren_dwh',
+    create_refresh_siren_dwh = RedshiftOperator(
+        task_id='create_refresh_siren_dwh',
         sql='2_standardize_siren.sql'
     )
 
-    create_replace_infogreffe_dwh = RedshiftOperator(
-        task_id='create_replace_infogreffe_dwh',
+    create_refresh_infogreffe_dwh = RedshiftOperator(
+        task_id='create_refresh_infogreffe_dwh',
         sql='3_standardize_infogreffe.sql'
     )
 
-    create_replace_cpv_dwh = RedshiftOperator(
-        task_id='create_replace_cpv_dwh',
+    create_refresh_cpv_dwh = RedshiftOperator(
+        task_id='create_refresh_cpv_dwh',
         sql='4_standardize_cpv.sql'
     )
 
-    start_dwh >> create_decp_titulaires_dwh >> create_replace_decp_marches_dwh >> create_replace_siren_dwh >> create_replace_infogreffe_dwh >> create_replace_cpv_dwh >> stop_dwh
+    start_dwh >> create_decp_titulaires_dwh >> create_refresh_decp_marches_dwh >> create_refresh_siren_dwh >> create_refresh_infogreffe_dwh >> create_refresh_cpv_dwh >> stop_dwh
 
 
