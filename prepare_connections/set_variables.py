@@ -16,7 +16,7 @@ if __name__ == '__main__':
     Variable.set("siren_url", 'https://www.data.gouv.fr/en/datasets/r/573067d3-f43d-4634-9664-675277b81857')
     Variable.set("siren_csvname", 'StockUniteLegale_utf8.csv')
     Variable.set("cpv_csvname", 'cpv_2008_ver_2013.csv')
-    Variable.set("infogreffe_curl", "https://opendata.datainfogreffe.fr/api/records/1.0/download/?dataset=chiffres-cles-2020&format=csv&fields=denomination,siren,nic,forme_juridique,code_ape,libelle_ape,adresse,code_postal,ville,date_de_cloture_exercice_1,duree_1,ca_1,resultat_1,effectif_1")
+    Variable.set("infogreffe_curl", "https://opendata.datainfogreffe.fr/api/records/1.0/download/?dataset=chiffres-cles-2020&format=csv&fields=siren,millesime_1,date_de_cloture_exercice_1,duree_1,tranche_ca_millesime_1,ca_1,resultat_1,effectif_1,millesime_2,date_de_cloture_exercice_2,duree_2,tranche_ca_millesime_2,ca_2,resultat_2,effectif_2")
     Variable.set("infogreffe_csvname", 'chiffres-cles-2019.csv')
     Variable.set("ec2_config_base", {
         'ImageId': 'ami-0de9f803fcac87f46',

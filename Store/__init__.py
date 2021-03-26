@@ -1,1 +1,0 @@
-from .infogreffe_params import InfoGreffeQueries
