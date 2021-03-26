@@ -1,27 +1,29 @@
 from airflow.models.baseoperator import BaseOperator
 from airflow.configuration import conf
-# from airflow.operators.postgres_operator import PostgresOperator
-# from airflow.hooks.postgres_hook import PostgresHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-# from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.utils.decorators import apply_defaults
 import psycopg2.sql as S
-# import psycopg2
-# from psycopg2 import (OperationalError, ProgrammingError, DatabaseError, DataError, NotSupportedError)
-# import time
-import inspect
 import os
 
 
 def read_instructions(s, file_ending=('.sql'), file_split=';', file_comment='-', file_strip='\n ',
                       working_dir=None):
-    # Read the instructions and return the instructions cleaned as a tuple
-    ## If the instructions end with file_ending, it indicates this is a file, and it will try to open them relative
-    # to ref_dir. It will split on the file_split char
-    ## Else, if it is a simple string, it will include it as a tuple
-    ## Else, it if is a list or a tuple, it will return it as a tuple
-    # For each element, it then strips the strings
-    ## And split it
+    """
+     Read the instructions and return the instructions cleaned as a tuple
+    - If the instructions end with file_ending, it indicates this is a file, and it will try to open them relative
+        to ref_dir. It will split on the file_split char
+    - Else, if it is a simple string, it will include it as a tuple
+    - Else, it if is a list or a tuple, it will return it as a tuple
+    For each element, it then strips the string for nulls and comments
+    :param s:
+    :param file_ending:
+    :param file_split:
+    :param file_comment:
+    :param file_strip:
+    :param working_dir:
+    :return:
+    """
+
     if working_dir is None:
         working_dir = conf.get('core', 'dags_folder')
     commands_unformatted = ()
@@ -50,12 +52,26 @@ def read_instructions(s, file_ending=('.sql'), file_split=';', file_comment='-',
 
 
 class RedshiftOperator(BaseOperator):
+    """
+    Executes command.
+    Like PostgresOperator, but with argument Redshift_conn_id.
+    """
     ui_color = "#ffc6ff"
     template_fields = ('sql',)
     template_ext = ('.sql', )
 
     @apply_defaults
     def __init__(self, redshift_conn_id, sql, params_sql=None, working_dir=None, *args, **kwargs):
+        """
+
+        Args:
+            redshift_conn_id (str): Connection id in Airflow
+            sql (str): SQL statement or filename
+            params_sql (dict): parameters
+            working_dir (str): working directory to look for the file
+            *args:
+            **kwargs:
+        """
         self.working_dir = working_dir
         self.redshift_conn_id = redshift_conn_id
         super(RedshiftOperator, self).__init__(*args, **kwargs)
@@ -71,6 +87,15 @@ class RedshiftOperator(BaseOperator):
         self.params_sql = params_sql
 
     def execute(self, context=None):
+        """
+        Format the sql statements with the params_sql statement.
+        Execute one by one the different statements.
+        Args:
+            context:
+
+        Returns:
+
+        """
         if self.params_sql is not None:
             commands_formatted = [S.SQL(q).format(**self.params_sql) for q in self.commands_stripped]
         else:
@@ -78,11 +103,15 @@ class RedshiftOperator(BaseOperator):
         hook = PostgresHook(postgres_conn_id=self.redshift_conn_id)
         for qf in commands_formatted:
             self.log.info("Executing Query:{}".format(qf.as_string(hook.get_conn())))
-            hook.run((qf,))
+            hook.run((qf, ))
             pass
 
 
 class RedshiftCopyFromS3(RedshiftOperator):
+    """
+    Copy data from S3 to Redshift. Optionnally truncate before.
+    Uses IAM ROLE arn as authentification.
+    """
     template_fields = ('sql', 'arn', 's3_bucket', 's3_folder' )
     template_ext = ('.sql', )
     ui_color = "#f4a261"
@@ -100,6 +129,26 @@ class RedshiftCopyFromS3(RedshiftOperator):
     @apply_defaults
     def __init__(self, redshift_conn_id, arn, s3_bucket, s3_folder, fn, schema, table, region_name='eu-central-1',
                  truncate=True, format='csv', delimiter=',', jsonpath='auto', header=True, fillrecord=False, *args, **kwargs):
+        """
+
+        Args:
+            redshift_conn_id (str): Airflow connection id
+            arn (str): ARN name to access S3.
+            s3_bucket (str): s3 bucket
+            s3_folder (str): s3 folder. S3_path for copy is s3://{s3_bucket}/{s3_folder/{fn} (if fn is provided)
+            fn (str): Optional, filename. If provided, will be added to s3_path
+            schema (str): Redshift destination schema
+            table (str): Redshift destination table
+            region_name (str): AWS region name
+            truncate (bool): run TRUNCATE statement before
+            format (str): 'csv' or 'json'
+            delimiter (str): CSV delimiter, default ','
+            jsonpath (str): Option for JSONpath, default 'auto'
+            header (bool): if True, indicates the CSV has header
+            fillrecord (bool): default False. If True, add the FILLRECORD option (for CSV)
+            *args:
+            **kwargs:
+        """
         option_line = []
         self.arn = arn
         self.s3_bucket = s3_bucket
