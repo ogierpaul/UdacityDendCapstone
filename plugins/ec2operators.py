@@ -7,19 +7,16 @@ import time
 import os
 
 class BaseEc2Operator(BaseOperator):
-    """
-    This Operator interacts with EC2.
-    Using AwsHook, it can instantiate a boto3 ressource or client to interact with Ec2 instances.
-    Ec2 machines are recognized through a (tag_key, tag_value) combination.
-    It thus allow to have multipl operators working on the same instance, even if the InstanceId changes at each DAG run.
-
-    """
     template_fields = ('tag_key', 'tag_value')
 
     @apply_defaults
     def __init__(self, aws_conn_id, tag_key, tag_value, retry=10, sleep=10, region_name='eu-central-1', *args,
                  **kwargs):
         """
+        This Operator interacts with EC2.
+        Using AwsHook, it can instantiate a boto3 ressource or client to interact with Ec2 instances.
+        Ec2 machines are recognized through a (tag_key, tag_value) combination.
+        It thus allow to have multipl operators working on the same instance, even if the InstanceId changes at each DAG run.
 
         :param aws_conn_id-->str: The AwsHook string name in Airflow
         :param tag_key -->str: A tag key. In combination (tag_key, tag_value), identifies an EC2 Instance.
@@ -281,6 +278,19 @@ class Ec2BashExecutor(BaseEc2Operator):
 
     @apply_defaults
     def __init__(self, aws_conn_id, tag_key, tag_value, bash, working_dir=None, retry=10, sleep=3, *args, **kwargs):
+        """
+        Run commands on an ec2 instance
+        Args:
+            aws_conn_id: Airflow connection string
+            tag_key: Tag Key
+            tag_value: Tag Value, identifies the EC2 instance
+            bash (str): bash command to run, can be a file or a string
+            working_dir (str): Working directory where the file is located
+            retry: Number of time the status of the command is probed
+            sleep: Interval between each probe
+            *args:
+            **kwargs:
+        """
         super(Ec2BashExecutor, self).__init__(
             aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, retry=retry, sleep=sleep, *args, **kwargs
         )
@@ -386,15 +396,12 @@ class Ec2BashExecutor(BaseEc2Operator):
 
 
 class Ec2Terminator(BaseEc2Operator):
-    """
-    This operator search all instances matching the (tag_key, tag value) combination, and terminates or stop them.
-    """
     ui_color = "#bdb2ff"
 
     @apply_defaults
     def __init__(self,  terminate='stop',  *args, **kwargs):
         """
-
+        This operator search all instances matching the (tag_key, tag value) combination, and terminates or stop them.
         :param terminate: if 'stop', stop instance Else if 'terminate', terminate instance'
         :param args: See args from Ec2BaseOperator and BaseOperator
         :param kwargs:

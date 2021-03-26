@@ -52,10 +52,6 @@ def read_instructions(s, file_ending=('.sql'), file_split=';', file_comment='-',
 
 
 class RedshiftOperator(BaseOperator):
-    """
-    Executes command.
-    Like PostgresOperator, but with argument Redshift_conn_id.
-    """
     ui_color = "#ffc6ff"
     template_fields = ('sql',)
     template_ext = ('.sql', )
@@ -63,7 +59,8 @@ class RedshiftOperator(BaseOperator):
     @apply_defaults
     def __init__(self, redshift_conn_id, sql, params_sql=None, working_dir=None, *args, **kwargs):
         """
-
+        Executes command.
+        Like PostgresOperator, but with argument Redshift_conn_id.
         Args:
             redshift_conn_id (str): Connection id in Airflow
             sql (str): SQL statement or filename
@@ -108,10 +105,6 @@ class RedshiftOperator(BaseOperator):
 
 
 class RedshiftCopyFromS3(RedshiftOperator):
-    """
-    Copy data from S3 to Redshift. Optionnally truncate before.
-    Uses IAM ROLE arn as authentification.
-    """
     template_fields = ('sql', 'arn', 's3_bucket', 's3_folder' )
     template_ext = ('.sql', )
     ui_color = "#f4a261"
@@ -130,7 +123,8 @@ class RedshiftCopyFromS3(RedshiftOperator):
     def __init__(self, redshift_conn_id, arn, s3_bucket, s3_folder, fn, schema, table, region_name='eu-central-1',
                  truncate=True, format='csv', delimiter=',', jsonpath='auto', header=True, fillrecord=False, *args, **kwargs):
         """
-
+        Copy data from S3 to Redshift. Optionnally truncate before.
+        Uses IAM ROLE arn as authentification.
         Args:
             redshift_conn_id (str): Airflow connection id
             arn (str): ARN name to access S3.

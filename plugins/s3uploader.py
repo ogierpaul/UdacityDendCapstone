@@ -6,17 +6,13 @@ from botocore.exceptions import ClientError
 import os
 
 class S3UploadFromLocal(BaseOperator):
-    """
-    Upload a local file to S3
-    """
-
     ui_color = "#9bf6ff",
     template_fields = ('working_dir', 'fn', 's3_bucket',  's3_folder',)
 
     @apply_defaults
     def __init__(self, aws_conn_id, working_dir, fn, s3_bucket, s3_folder, region_name='eu-central-1', *args, **kwargs):
         """
-
+        Upload a local file to S3
         Args:
             aws_conn_id (str): Aws Conneciton Id in Airflow
             working_dir (str): directory where the file is located
