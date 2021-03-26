@@ -43,7 +43,7 @@ with DAG(
     default_args=default_args,
     description='Download DECP data from Web to Redshift',
     schedule_interval=None,
-    tags=['dend', 'decp']
+    tags=['dend', 'decp', 'staging']
 ) as dag:
     _docs_md_fp = os.path.join(default_args['working_dir'], 'Readme.md')
     dag.doc_md = open(_docs_md_fp, 'r').read()
@@ -51,9 +51,7 @@ with DAG(
     start_decp = DummyOperator(
         task_id='Start_decp'
     )
-    stop_decp = DummyOperator(
-        task_id='Stop_decp'
-    )
+
     upload_config_marches = S3UploadFromLocal(
         task_id='Upload_config_marches',
         fn='jq_marches.sh',
@@ -88,7 +86,7 @@ with DAG(
 
     create_schema = RedshiftOperator(
         task_id='create_decp_schema',
-        sql='1_create_schema.sql'
+        sql='schema_decp_staging_datalake'
     )
 
     copy_titulaires_from_s3 = RedshiftCopyFromS3(
@@ -113,7 +111,7 @@ with DAG(
 
     upsert_titulaires = RedshiftUpsert(
         task_id='upsert_titulaires',
-        sql='2_select_unique_decp_titulaires.sql',
+        sql="SELECT * FROM staging.decp_titulaires_unique;",
         schema='datalake',
         table='decp_titulaires',
         pkey='decp_bridge_uid'
@@ -121,10 +119,13 @@ with DAG(
 
     upsert_marches = RedshiftUpsert(
         task_id='upsert_marches',
-        sql='2_select_unique_decp_marches.sql',
+        sql="SELECT * FROM staging.decp_marches_unique;",
         schema='datalake',
         table='decp_marches',
         pkey='decp_uid'
+    )
+    stop_decp = DummyOperator(
+        task_id='Stop_decp'
     )
 
 

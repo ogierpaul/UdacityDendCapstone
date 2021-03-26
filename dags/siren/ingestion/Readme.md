@@ -50,5 +50,5 @@
 #### 1_siren_ec2_instructions.sh
 - list of instructions to be executed by ec2 machine
 
-#### 2_create_redshift.sql
+#### schema_infogreffe_staging_datalake.sql
 - Creation of Redshift schema for this dag

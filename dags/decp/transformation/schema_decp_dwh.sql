@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW  datalake.decp_titulaires_trimmed_ids
+CREATE OR REPLACE VIEW datalake.decp_titulaires_trimmed_ids
 AS
 SELECT
     decp_bridge_uid,
@@ -70,12 +70,35 @@ SELECT
 FROM datalake.decp_titulaires_valid_ids;
 
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS dwh.decp_titulaires_standardized AS
-    SELECT * FROM datalake.decp_titulaires_standardized;
+CREATE TABLE IF NOT EXISTS dwh.decp_titulaires(
+    decp_bridge_uid VARCHAR PRIMARY KEY ,
+    decp_uid VARCHAR,
+    euvat VARCHAR,
+    siren varchar,
+    siret VARCHAR,
+    titulaire_name VARCHAR,
+    titulaire_iso_country VARCHAR
+);
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS dwh.decp_distinct_siren AS
-    SELECT DISTINCT siren FROM dwh.decp_titulaires_standardized WHERE siren IS NOT NULL;
+CREATE TABLE IF NOT EXISTS dwh.decp_marches
+(
+    "decp_uid"               VARCHAR PRIMARY KEY,
+    "source"                 varchar,
+    "decp_id"                VARCHAR,
+    "type"                   varchar,
+    "nature"                 varchar,
+    "procedure"              varchar,
+    "objet"                  VARCHAR,
+    "codecpv"                varchar,
+    "dureemois"              INTEGER,
+    "datenotification"       DATE,
+    "datepublicationdonnees" DATE,
+    "montant"                DOUBLE PRECISION,
+    "formeprix"              varchar,
+    "acheteur_id"            VARCHAR,
+    "acheteur_name"          VARCHAR
+);
 
-REFRESH MATERIALIZED VIEW dwh.decp_titulaires_standardized;
-
-REFRESH MATERIALIZED VIEW dwh.decp_distinct_siren;
+CREATE TABLE IF NOT EXISTS dwh.decp_siren_used (
+    siren VARCHAR PRIMARY KEY
+);

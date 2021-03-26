@@ -80,3 +80,19 @@ SELECT
        effectif,
        ROW_NUMBER()  OVER (PARTITION BY infogreffe_uid ORDER BY duree DESC, date_de_cloture DESC) AS row_n
 FROM staging.infogreffe_normalized;
+
+
+CREATE OR REPLACE VIEW staging.infogreffe_unique AS
+SELECT
+       infogreffe_uid,
+       siren,
+       millesime,
+       date_de_cloture,
+       duree,
+       tranche_ca_millesime,
+       ca,
+       resultat,
+       effectif
+FROM
+staging.infogreffe_ranked
+WHERE staging.infogreffe_ranked.row_n = 1;

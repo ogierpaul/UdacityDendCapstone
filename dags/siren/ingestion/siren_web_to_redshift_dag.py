@@ -40,18 +40,15 @@ with DAG(
     default_args=default_args,
     description='Download the Siren File from the web to Redshift',
     schedule_interval=None,
-    tags=['dend', 'siren']
+    tags=['dend', 'siren', 'staging']
 ) as dag:
     _docs_md_fp = os.path.join(default_args['working_dir'], 'Readme.md')
     dag.doc_md = open(_docs_md_fp, 'r').read()
 
-    start_siren = DummyOperator(
+    start_staging = DummyOperator(
         task_id='start_siren'
     )
 
-    stop_siren = DummyOperator(
-        task_id='stop_siren'
-    )
 
     create_ec2_if_not_exists = Ec2Creator(
         task_id='create_ec2_if_not_exists',
@@ -60,7 +57,7 @@ with DAG(
 
     download_from_web_to_s3 = Ec2BashExecutor(
         task_id='download_from_web_to_s3',
-        bash='1_siren_ec2_instructions.sh',
+        bash='ec2_instructions.sh',
         sleep=5,
         retry=30
     )
@@ -74,7 +71,7 @@ with DAG(
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
         dag=dag,
-        sql='2_create_redshift.sql'
+        sql='schema_siren_staging_datalake'
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
@@ -95,5 +92,9 @@ with DAG(
         sql="SELECT * FROM staging.siren_attributes"
     )
 
-    start_siren >> create_ec2_if_not_exists >> download_from_web_to_s3>> stop_ec2
-    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake  >> stop_siren
+    stop_staging = DummyOperator(
+        task_id='stop_siren'
+    )
+
+    start_staging >> create_ec2_if_not_exists >> download_from_web_to_s3 >> stop_ec2
+    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_staging

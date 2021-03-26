@@ -60,7 +60,7 @@ with DAG(
 
     download_from_api_to_s3 = Ec2BashExecutor(
         task_id='download_from_api_to_s3',
-        bash='1_ec2_instructions.sh',
+        bash='ec2_instructions.sh',
         sleep=5,
         retry=30
     )
@@ -74,7 +74,7 @@ with DAG(
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
         dag=dag,
-        sql='2_create_redshift.sql'
+        sql='schema_infogreffe_staging_datalake'
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
@@ -93,7 +93,7 @@ with DAG(
         schema="datalake",
         table="infogreffe_attributes",
         pkey="infogreffe_uid",
-        sql="3_select_unique_infogreffe.sql"
+        sql="SELECT * FROM staging.infogreffe_unique"
     )
 
     start_infogreffe >> create_ec2_if_not_exists >> download_from_api_to_s3 >> stop_ec2

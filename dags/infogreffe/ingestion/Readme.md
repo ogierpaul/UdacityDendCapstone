@@ -21,3 +21,5 @@
 - `TRUNCATE` the staging table
 - `COPY` the csv file from S3
 - `INSERT INTO` the datalake
+    - the table is normalized first
+    - filter out rows with correct year formatting on column `millesime`

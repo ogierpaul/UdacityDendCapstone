@@ -33,9 +33,3 @@ resultat,
 effectif
 FROM
 datalake.infogreffe_unique_millesime;
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS dwh.infogreffe_standardized AS
-    SELECT * FROM datalake.infogreffe_standardized
-INNER JOIN (SELECT siren FROM dwh.decp_distinct_siren) b USING(siren);
-
-REFRESH MATERIALIZED VIEW dwh.infogreffe_standardized;
