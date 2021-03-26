@@ -5,14 +5,31 @@ from airflow.providers.amazon.aws.hooks.base_aws import AwsBaseHook
 from airflow.configuration import conf
 import time
 import os
-import airflow.providers.postgres.operators.postgres
 
 class BaseEc2Operator(BaseOperator):
+    """
+    This Operator interacts with EC2.
+    Using AwsHook, it can instantiate a boto3 ressource or client to interact with Ec2 instances.
+    Ec2 machines are recognized through a (tag_key, tag_value) combination.
+    It thus allow to have multipl operators working on the same instance, even if the InstanceId changes at each DAG run.
+
+    """
     template_fields = ('tag_key', 'tag_value')
 
     @apply_defaults
     def __init__(self, aws_conn_id, tag_key, tag_value, retry=10, sleep=10, region_name='eu-central-1', *args,
                  **kwargs):
+        """
+
+        :param aws_conn_id-->str: The AwsHook string name in Airflow
+        :param tag_key -->str: A tag key. In combination (tag_key, tag_value), identifies an EC2 Instance.
+        :param tag_value: A tag value. In combination (tag_key, tag_value), identifies an EC2 Instance.
+        :param retry-->str:
+        :param sleep: Sleep time before testing again status update.
+        :param region_name: Aws Region Name of Ec2 Instance
+        :param args:
+        :param kwargs:
+        """
         super(BaseEc2Operator, self).__init__(*args, **kwargs)
         self.aws_conn_id = aws_conn_id
         self.region_name = region_name
@@ -22,9 +39,17 @@ class BaseEc2Operator(BaseOperator):
         self.sleep = sleep
 
     def _get_hook(self):
+        """
+
+        :return: AwsBaseHook from airflow.providers.amazon.aws.hooks.base_aws
+        """
         return AwsBaseHook(aws_conn_id=self.aws_conn_id, client_type='ec2')
 
     def _get_ecc(self):
+        """
+
+        :return: boto3.client instance for Ec2 service.
+        """
         aws_hook = self._get_hook()
         aws_credentials = aws_hook.get_credentials()
         aws_access_key_id = aws_credentials.access_key
@@ -37,6 +62,10 @@ class BaseEc2Operator(BaseOperator):
         return ecc
 
     def _get_ecr(self):
+        """
+
+        :return: boto3.ressource instance for Ec2 service.
+        """
         aws_hook = self._get_hook()
         aws_credentials = aws_hook.get_credentials()
         aws_access_key_id = aws_credentials.access_key
@@ -71,8 +100,8 @@ class BaseEc2Operator(BaseOperator):
 
     def _get_instance_status(self, Instanceid):
         """
-        Return a synthetized instance status: 'available', 'stopped', 'deleting', 'modifying', None
-        Used to simplify the instance check before launching any queries
+        Return a simplified instance status: 'available', 'stopped', 'deleting', 'modifying', None
+        Used to smoothen the instance check before launching any queries
         Args:
             Instanceid (str): Instance number
 
@@ -104,11 +133,7 @@ class BaseEc2Operator(BaseOperator):
 
     def _filter_per_tag_per_status(self, state='available'):
         """
-        Filter on custom states the VMs matching the TAG_KEY, TAG_VALUE parameters from config
-        Args:
-            ecc (boto3.client): Ec2 Boto3 Client
-            tag_key (str):
-            tag_value (str):
+        Filter on custom states the EC2 machines matching the TAG_KEY, TAG_VALUE
         Returns
             list: list of Instance Ids
         """
@@ -120,6 +145,14 @@ class BaseEc2Operator(BaseOperator):
 
 
 class Ec2Creator(BaseEc2Operator):
+    """
+    This operator search for an available instance matching the (tag_key, tag_value) parameter.
+    It either:
+    - Finds an available one --> do nothing
+    - Finds a stopped one --> start
+    - Finds a modifying one --> probe regularly for status until it is available or the max number retry have been reached
+    - Finds none --> Create it
+    """
     ui_color = "#ffadad"
 
     @apply_defaults
@@ -133,7 +166,10 @@ class Ec2Creator(BaseEc2Operator):
             SecurityGroupId (str): Security Group Name
             IamInstanceProfileName (str): Iam Role Name
             TAG_KEY (str): Tag Key
-            TAG_VALUE (str): Tag Value
+            TAG_VALUE (str): Tag Value,
+            retry (int): number of times the operator will check for status until it times out
+            sleep (int): number of seconds between each status proble
+            start_sleep (int): number of seconds to wait if the machine has been created
 
         """
         super(Ec2Creator, self).__init__(aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, retry=retry,
@@ -174,6 +210,15 @@ class Ec2Creator(BaseEc2Operator):
         return new_instance
 
     def _get_or_create(self):
+        """
+        This operator search for an available instance matching the (tag_key, tag_value) parameter.
+        It either:
+        - Finds an available one --> do nothing
+        - Finds a stopped one --> start
+        - Finds a modifying one --> probe regularly for status until it is available or the max number retry have been reached
+        - Finds none --> Create it
+        :return: id of the instance available
+        """
         n = 0
         res_id = None
         # Loop (retry) times while waiting (sleep) secondes between each loop
@@ -341,16 +386,28 @@ class Ec2BashExecutor(BaseEc2Operator):
 
 
 class Ec2Terminator(BaseEc2Operator):
+    """
+    This operator search all instances matching the (tag_key, tag value) combination, and terminates or stop them.
+    """
     ui_color = "#bdb2ff"
 
     @apply_defaults
-    def __init__(self, aws_conn_id, tag_key, tag_value, terminate='stop', retry=10, sleep=20, *args, **kwargs):
-        super(Ec2Terminator, self).__init__(
-            aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, retry=retry, sleep=sleep, *args, **kwargs
-        )
+    def __init__(self,  terminate='stop',  *args, **kwargs):
+        """
+
+        :param terminate: if 'stop', stop instance Else if 'terminate', terminate instance'
+        :param args: See args from Ec2BaseOperator and BaseOperator
+        :param kwargs:
+        """
+        super(Ec2Terminator, self).__init__( *args, **kwargs)
         self.terminate = terminate
 
     def execute(self, context):
+        """
+        This operator search all instances matching the (tag_key, tag value) combination, and terminates or stop them.
+        :param context:
+        :return:
+        """
         self.log.info(f"Executing Operator Ec2Terminator")
         self.log.info(f"TAG_KEY {self.tag_key} TAG_VALUE {self.tag_value}")
         ecr = self._get_ecr()
@@ -367,8 +424,10 @@ class Ec2Terminator(BaseEc2Operator):
                 if len(active_instances) > 0:
                     if self.terminate == 'terminate':
                         m = ecr.instances.filter(InstanceIds=active_instances).terminate()
-                    else:
+                    elif self.terminate == 'stop':
                         m = ecr.instances.filter(InstanceIds=active_instances).stop()
+                    else:
+                        raise ValueError(f"terminate parameter must be either 'terminate' or 'stop'")
                     time.sleep(self.sleep)
                 else:
                     break
@@ -379,15 +438,3 @@ class Ec2Terminator(BaseEc2Operator):
         self.log.info(f"Final Instances found:\n{s.join(all_instances_status)}")
         self.log.info("END OF EXECUTION")
 
-#
-# class Ec2CurlGet(Ec2BashExecutor):
-#     ui_color = "#e76f51"
-#
-#     @apply_defaults
-#     def __init__(self, aws_conn_id, tag_key, tag_value, url, filename, parameters=None, sleep=3, retry=20, *args,
-#                  **kwargs):
-#         base_call = """curl -X GET "{url}" -o {filename}"""
-#         complete_url = url + '?' + "&".join([f"{k}={parameters[k]}" for k in parameters])
-#         #TODO: review sh = base_call.format(url=complete_url, filename=filename)
-#         super(Ec2CurlGet, self).__init__(aws_conn_id=aws_conn_id, tag_key=tag_key, tag_value=tag_value, sh=sh,
-#                                          sleep=sleep, retry=retry, *args, **kwargs)
