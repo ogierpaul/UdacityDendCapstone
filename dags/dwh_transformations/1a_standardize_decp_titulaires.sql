@@ -15,7 +15,7 @@ WHERE
     AND
       (titulaire_typeidentifiant = 'SIRET' OR Left(titulaire_typeidentifiant, 3) = 'TVA');
 
-CREATE VIEW datalake.decp_titulaires_valid_ids
+CREATE OR REPLACE VIEW datalake.decp_titulaires_valid_ids
 AS
 SELECT
 decp_bridge_uid,
@@ -49,7 +49,7 @@ FROM (
         )
  ) b;
 
-CREATE VIEW datalake.decp_titulaires_standardized
+CREATE OR REPLACE VIEW datalake.decp_titulaires_standardized
 AS
 SELECT
     decp_bridge_uid,
@@ -70,3 +70,12 @@ SELECT
 FROM datalake.decp_titulaires_valid_ids;
 
 
+CREATE MATERIALIZED VIEW IF NOT EXISTS dwh.decp_titulaires_standardized AS
+    SELECT * FROM datalake.decp_titulaires_standardized;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS dwh.decp_distinct_siren AS
+    SELECT DISTINCT siren FROM dwh.decp_titulaires_standardized WHERE siren IS NOT NULL;
+
+REFRESH MATERIALIZED VIEW dwh.decp_titulaires_standardized;
+
+REFRESH MATERIALIZED VIEW dwh.decp_distinct_siren;
