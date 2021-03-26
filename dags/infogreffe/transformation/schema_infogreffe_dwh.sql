@@ -19,6 +19,7 @@ FROM (
 WHERE ranked.row_n = 1
 ;
 
+
 CREATE OR REPLACE VIEW datalake.infogreffe_standardized AS
 SELECT
 infogreffe_uid,
@@ -33,3 +34,16 @@ resultat,
 effectif
 FROM
 datalake.infogreffe_unique_millesime;
+
+CREATE TABLE IF NOT EXISTS dwh.infogreffe_attributes (
+    infogreffe_uid VARCHAR PRIMARY KEY ,
+    siren VARCHAR,
+    euvat VARCHAR,
+    millesime INTEGER,
+    date_de_cloture DATE,
+    duree INTEGER,
+    tranche_ca_millesime VARCHAR,
+    ca FLOAT,
+    resultat FLOAT,
+    effectif FLOAT
+);
