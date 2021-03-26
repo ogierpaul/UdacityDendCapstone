@@ -34,3 +34,41 @@ CREATE TABLE IF NOT EXISTS datalake.decp_titulaires (
     titulaire_name VARCHAR,
     titulaire_typeidentifiant VARCHAR
 );
+
+
+CREATE OR REPLACE VIEW staging.decp_titulaires_ranked AS
+SELECT decp_bridge_uid,
+        decp_uid,
+        titulaire_id,
+        titulaire_name,
+        titulaire_typeidentifiant,
+        ROW_NUMBER()  OVER (PARTITION BY decp_bridge_uid ORDER BY length(titulaire_name) DESC) AS row_n
+ FROM (
+     SELECT
+    md5(coalesce(decp_uid, '') || coalesce(titulaire_typeidentifiant, '') || coalesce(titulaire_id, '') ) as decp_bridge_uid,
+    decp_uid,
+    titulaire_id,
+    titulaire_name,
+    titulaire_typeidentifiant
+FROM  staging.decp_titulaires
+     ) b;
+
+CREATE OR REPLACE VIEW staging.decp_marches_ranked AS
+SELECT
+       "decp_uid",
+       "source",
+       "decp_id",
+       "type",
+       "nature",
+       "procedure",
+       "objet",
+       "codecpv",
+       "dureemois",
+       "datenotification"::DATE,
+       "datepublicationdonnees"::DATE,
+       "montant"::DOUBLE PRECISION,
+       "formeprix",
+       "acheteur_id" ,
+       "acheteur_name",
+        ROW_NUMBER() OVER (PARTITION BY decp_uid ORDER BY datepublicationdonnees DESC) AS row_n
+FROM staging.decp_marches;
