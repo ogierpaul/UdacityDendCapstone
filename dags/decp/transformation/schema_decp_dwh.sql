@@ -3,7 +3,7 @@ AS
 SELECT
     decp_bridge_uid,
     decp_uid,
-     UPPER(REPLACE('-', REPLACE(REPLACE(TRIM(titulaire_id), ' ', ''), '.', ''), '')) as titulaire_id,
+     UPPER(REPLACE(REPLACE(REPLACE(TRIM(titulaire_id), ' ', ''), '.', ''), '-' ,'')) as titulaire_id,
    TRIM(titulaire_name) as titulaire_name,
      CASE
          WHEN UPPER(titulaire_typeidentifiant) = 'SIRET' THEN 'SIRET'
