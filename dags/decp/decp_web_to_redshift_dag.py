@@ -83,7 +83,7 @@ with DAG(
         task_id='stop_ec2',
         dag=dag,
         terminate='stop',
-        # TODO: Uncomment trigger_rule='all_done'
+        trigger_rule='all_done'
     )
 
     create_schema = RedshiftOperator(
@@ -129,7 +129,7 @@ with DAG(
 
 
 start_decp >> [upload_config_marches, upload_config_titulaires] >> create_ec2 >> download_extract_copy_file >> stop_ec2
-stop_ec2 >> [copy_titulaires_from_s3, copy_marches_from_s3]
+stop_ec2 >> create_schema >> [copy_titulaires_from_s3, copy_marches_from_s3]
 copy_marches_from_s3 >> upsert_marches
 copy_titulaires_from_s3 >> upsert_titulaires
 [upsert_marches, upsert_titulaires] >> stop_decp
