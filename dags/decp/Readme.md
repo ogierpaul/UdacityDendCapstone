@@ -5,6 +5,7 @@
 ### Source description: Standard JSON
 - The source is a download url
 - The downloaded file is a standard formatted JSON file
+- The source is updated every day
 
 ### Target description: Redshift tables
 - The target is two redshift tables in the datalake, `decp_marches` and `decp_titulaires`

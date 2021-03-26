@@ -5,6 +5,7 @@
 ### Source description: Standard JSON
 - The source is a download url
 - The downloaded file is a compressed zipped csv
+- The source is updated every month
 
 ### Target description: Redshift table
 - The target is a table in the datalake, `siren_attributes`

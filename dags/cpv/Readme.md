@@ -6,6 +6,8 @@
 - The source is a local file, as there is no direct url link
 - The source data was a bit messy (Excel File) and was reformatted to a standard csv
 - As the classification is a fixed convention, this manual way of working is acceptable
+    - The definition will not change so often
+    - Running this DAG once is enough
 
 ### Target description: Redshift table
 - The target is a table in the datalake, `cpv_description`
