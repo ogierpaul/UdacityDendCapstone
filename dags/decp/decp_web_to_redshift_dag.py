@@ -1,16 +1,11 @@
 from datetime import timedelta
-
-# The DAG object; we'll need this to instantiate a DAG
 from airflow import DAG
 from airflow.models import Variable
 from airflow.utils.dates import days_ago
+from airflow.operators.dummy import DummyOperator
 from ec2operators import Ec2BashExecutor, Ec2Creator, Ec2Terminator
 from s3uploader import S3UploadFromLocal
-from airflow.configuration import conf
 from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert
-# from airflow.operators.s3_to_redshift_operator import S3ToRedshiftTransfer
-# from airflow.operators import RedshiftUpsert
-from airflow.operators.dummy import DummyOperator
 import os
 
 default_args = {
@@ -88,7 +83,12 @@ with DAG(
         task_id='stop_ec2',
         dag=dag,
         terminate='stop',
-        trigger_rule='all_done'
+        # TODO: Uncomment trigger_rule='all_done'
+    )
+
+    create_schema = RedshiftOperator(
+        task_id='create_decp_schema',
+        sql='1_create_schema.sql'
     )
 
     copy_titulaires_from_s3 = RedshiftCopyFromS3(

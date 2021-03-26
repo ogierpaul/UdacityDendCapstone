@@ -1,16 +1,13 @@
 from datetime import timedelta
-
-# The DAG object; we'll need this to instantiate a DAG
+from airflow.operators.dummy import DummyOperator
 from airflow import DAG
 from airflow.models import Variable
 from airflow.utils.dates import days_ago
 from s3uploader import S3UploadFromLocal
 from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert
-from airflow.operators.dummy import DummyOperator
 import os
 
-# These args will get passed on to each operator
-# You can override them on a per-task basis during operator initialization
+
 default_args = {
     'depends_on_past': False,
     'start_date': days_ago(2),
