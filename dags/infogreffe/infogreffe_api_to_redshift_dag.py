@@ -75,6 +75,7 @@ with DAG(
         #TODO: Remove trigger_rule='all_done'
     )
 
+    #TODO: Review columns
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
         dag=dag,
@@ -89,7 +90,8 @@ with DAG(
         table='infogreffe_attributes',
         format='csv',
         header=True,
-        delimiter=';' #TODO: Review columns / delimiter
+        delimiter=';',
+        fillrecord=True
     )
     upsert_datalake = RedshiftUpsert(
         task_id='upsert_datalake',

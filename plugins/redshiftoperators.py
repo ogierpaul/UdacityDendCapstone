@@ -99,7 +99,7 @@ class RedshiftCopyFromS3(RedshiftOperator):
 
     @apply_defaults
     def __init__(self, redshift_conn_id, arn, s3_bucket, s3_folder, fn, schema, table, region_name='eu-central-1',
-                 truncate=True, format='csv', delimiter=',', jsonpath='auto', header=True, *args, **kwargs):
+                 truncate=True, format='csv', delimiter=',', jsonpath='auto', header=True, fillrecord=False, *args, **kwargs):
         option_line = []
         self.arn = arn
         self.s3_bucket = s3_bucket
@@ -109,6 +109,8 @@ class RedshiftCopyFromS3(RedshiftOperator):
             if header is True:
                 option_line.append('IGNOREHEADER AS 1')
             option_line.append("DELIMITER AS '{}'".format(delimiter[0]))
+            if fillrecord is True:
+                option_line.append('FILLRECORD')
         elif format == 'json':
             option_line.append("FORMAT AS JSON '{}'".format(jsonpath))
         option_line = ' '.join(option_line)
