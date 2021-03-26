@@ -1,20 +1,9 @@
-CREATE TABLE IF NOT EXISTS dwh.decp_titulaires_trimmed_ids
-(
-    "decp_bridge_uid" varchar PRIMARY KEY
-    "decp_uid" VARCHAR(
-    "titulaire_id" VARCHAR,
-    "titulaire_name" VARCHAR,
-    "titulaire_typeidentifiant" VARCHAR
-);
-
-
-TRUNCATE dwh.decp_titulaires_trimmed_ids;
-
-INSERT INTO dwh.decp_titulaires_trimmed_ids
+CREATE OR REPLACE VIEW  datalake.decp_titulaires_trimmed_ids
+AS
 SELECT
     decp_bridge_uid,
     decp_uid,
-     UPPER(REPLACE(REPLACE(TRIM(titulaire_id), ' ', ''), '.', '')) as titulaire_id,
+     UPPER(REPLACE('-', REPLACE(REPLACE(TRIM(titulaire_id), ' ', ''), '.', ''), '')) as titulaire_id,
    TRIM(titulaire_name) as titulaire_name,
      CASE
          WHEN UPPER(titulaire_typeidentifiant) = 'SIRET' THEN 'SIRET'
@@ -26,19 +15,10 @@ WHERE
     AND
       (titulaire_typeidentifiant = 'SIRET' OR Left(titulaire_typeidentifiant, 3) = 'TVA');
 
-CREATE TEMPORARY TABLE IF NOT EXISTS decp_titulaires_valid_ids
-(
-    "decp_uid" VARCHAR(128),
-    "titulaire_id" VARCHAR(64),
-    "titulaire_name" VARCHAR(256),
-    "titulaire_typeidentifiant" VARCHAR(64),
-    "siren" VARCHAR(9)
-);
-
-TRUNCATE decp_titulaires_valid_ids;
-
-INSERT INTO decp_titulaires_valid_ids
+CREATE VIEW datalake.decp_titulaires_valid_ids
+AS
 SELECT
+decp_bridge_uid,
 decp_uid,
 titulaire_id,
    titulaire_name,
@@ -55,7 +35,7 @@ titulaire_id,
     END as siren
 FROM (
      SELECT *
-     FROM decp_titulaires_trimmed_ids
+     FROM datalake.decp_titulaires_trimmed_ids
      WHERE
          (
             titulaire_typeidentifiant = 'SIRET'
@@ -69,10 +49,10 @@ FROM (
         )
  ) b;
 
-TRUNCATE  {schemaint}.decp_titulaires_formatted;
-
-INSERT INTO  {schemaint}.decp_titulaires_formatted
+CREATE VIEW datalake.decp_titulaires_standardized
+AS
 SELECT
+    decp_bridge_uid,
        decp_uid,
        CASE
            WHEN titulaire_typeidentifiant = 'TVA' THEN titulaire_id
@@ -81,7 +61,12 @@ SELECT
         END as eu_vat,
        siren,
        CASE WHEN titulaire_typeidentifiant = 'SIRET' THEN titulaire_id ELSE NULL END as siret,
-       titulaire_name
-FROM decp_titulaires_valid_ids;
+       titulaire_name,
+       CASE
+            WHEN titulaire_typeidentifiant = 'TVA' THEN LEFT(titulaire_id, 2)
+            WHEN siren IS NOT NULL THEN 'FR'
+           ELSE NULL
+        END as titulaire_iso_country
+FROM datalake.decp_titulaires_valid_ids;
 
 
