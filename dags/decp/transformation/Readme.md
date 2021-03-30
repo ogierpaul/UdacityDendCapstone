@@ -2,8 +2,6 @@
 ## Purpose
 - Maintain up-to-date, quality DECP tables in the Data Warehouse Layer
 
-![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/transformation/refresh_decp_dag.png)
-
 ## Transformations applied
 ### Decp Marches
 - None
@@ -13,3 +11,8 @@
 - Creating `euvat`, `siren`, `siret` columns using the `titulaireid` and `titulairetypeidentifiant` columns
     - ensure interoperability with the model
 - Extracting `titulaire_iso_country` column
+
+
+## Reference
+- [Cpv Documentation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/decp/Readme.md)
+ 

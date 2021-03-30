@@ -6,7 +6,16 @@
 - [Official Website](https://www.data.gouv.fr/en/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/#_)
 - Published once a month
 - 2.6 Gb in Size
-- 77 millions lines
+- 23 millions lines
+
+## Dags
+### Ingestion
+![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/ingest_siren_dag.png)
+
+### Transformation
+![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/refresh_siren_dag.png)
+
+
 
 ## Data Description
 At the Data Warehouse Level:

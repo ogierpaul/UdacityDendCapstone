@@ -65,4 +65,8 @@
 #### 2_select_unique_(marches, titulaires).sql
 - Contains SQL statements selecting unique lines from the staging tables
 - Removing duplicates on the data to be `UPSERT`
+
+
+## Reference
+- [Cpv Documentation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/decp/Readme.md)
  

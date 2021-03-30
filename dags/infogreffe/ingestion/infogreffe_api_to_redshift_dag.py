@@ -61,8 +61,8 @@ with DAG(
     download_from_api_to_s3 = Ec2BashExecutor(
         task_id='download_from_api_to_s3',
         bash='ec2_instructions.sh',
-        sleep=5,
-        retry=30
+        sleep=30,
+        retry=120
     )
 
     stop_ec2 = Ec2Terminator(
