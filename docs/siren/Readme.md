@@ -19,7 +19,6 @@
 ![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/refresh_siren_dag.png)
 
 
-
 ## Data Description
 At the Data Warehouse Level:
 
