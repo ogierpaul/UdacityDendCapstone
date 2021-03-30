@@ -22,4 +22,9 @@
 - Create the connections
 - Create the Variables
 - Create the schemas in Redshift 
- 
+
+## Reporting views
+- 3 different tables showing:
+    * How many contracts are signed each year with a socially dedicated (ESS, a sort of non-profit) company?
+    * Who are the biggest suppliers of the french state?
+    * How many contracts are signed each year and month? What is the seasonality of the data?

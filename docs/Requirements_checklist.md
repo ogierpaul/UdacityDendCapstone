@@ -46,7 +46,7 @@ Step 4: Run ETL to Model the Data
         Unit tests for the scripts to ensure they are doing the right thing
         Source/count checks to ensure completeness
 
-- TODO
+- ** Done: see the pipeline in the Dag folder. Also see the documentation for the data dictionnary**
 
 Step 5: Complete Project Write Up
 
@@ -60,4 +60,17 @@ Step 5: Complete Project Write Up
         If the pipelines were run on a daily basis by 7am.
         If the database needed to be accessed by 100+ people
 
-- TODO
+- If the data was increased by 100x:
+    - I would strongly recommend making changes to the source data format so that it is easily accessible by standard tools.
+    - Today the data needs re-formatting using bash commands, this is not scalable.
+    - Having more standard ways of formatting (API, csv, Json lines), splitted files on S3, can increase resiliency & parallelism
+    - I would not change to the Redshift architecture as it is already optimized for scale
+
+- If the pipelines were run on a daily basis by 7am:
+    - I would insert more Change Data Capture statements to only load the delta and not the full file each time
+    - Change Data Capture can be implemented using timestamps, hash functions, and specific triggers in the source
+    
+- If the database needed to be accessed by 100+ people:
+    - it would be a good idea then to separate compute from storage. See Amazon Athena, Snowflake.
+    - The separation would permit to 1) safeguard the data and 2) distribute the processing
+    
