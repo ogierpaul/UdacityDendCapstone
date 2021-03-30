@@ -38,7 +38,7 @@
     - Dimension, Axis: Procurement Contracts
     
 High Level Functional View
-Todo: insert image
+![HighLevelFunctionalView](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/high_level_functional_view.jpg)
 
 ### Technical Architecture Justification
 #### Data sources technology
@@ -49,7 +49,8 @@ Todo: insert image
 #### Data flow
 - Download from web >> copy to S3 >> staging area on Redshift >> datalake (Redshift) >> Data Warehouse (Redshift)
 
-Todo: insert image
+![HighLevelTechnicalView](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/high_level_architecture.jpg)
+
 
 #### Redshift as DB Backend
 - Redshift: column-oriented DBMS

@@ -2,6 +2,8 @@
 ## Dag purpose:  Load transactional data from a local file to Redshift
 - From a local csv file to a Resdhift Table
 
+![IngestCPVDag](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/ingestion/ingest_cpv_dag.png)
+
 ### Source description: Standard CSV
 - The source is a local file, as there is no direct url link
 - The source data was a bit messy (Excel File) and was reformatted to a standard csv
