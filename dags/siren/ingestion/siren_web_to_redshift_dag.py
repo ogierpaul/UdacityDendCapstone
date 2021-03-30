@@ -4,9 +4,8 @@ from airflow.models import Variable
 from airflow.utils.dates import days_ago
 from airflow.operators.dummy import DummyOperator
 from ec2operators import Ec2BashExecutor, Ec2Creator, Ec2Terminator
-from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert
+from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert, RedshiftQualityCheck
 import os
-
 
 default_args = {
     'depends_on_past': False,
@@ -49,7 +48,6 @@ with DAG(
         task_id='start_siren'
     )
 
-
     create_ec2_if_not_exists = Ec2Creator(
         task_id='create_ec2_if_not_exists',
         **ec2_config
@@ -71,7 +69,7 @@ with DAG(
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
         dag=dag,
-        sql='schema_siren_staging_datalake'
+        sql='schema_siren_staging_datalake.sql'
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
@@ -92,9 +90,16 @@ with DAG(
         sql="SELECT * FROM staging.siren_attributes"
     )
 
+    q_check = RedshiftQualityCheck(
+        task_id='quality_check',
+        schema="datalake",
+        table="siren_attributes",
+        pkey="siren"
+    )
+
     stop_staging = DummyOperator(
         task_id='stop_siren'
     )
 
     start_staging >> create_ec2_if_not_exists >> download_from_web_to_s3 >> stop_ec2
-    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_staging
+    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> q_check >> stop_staging

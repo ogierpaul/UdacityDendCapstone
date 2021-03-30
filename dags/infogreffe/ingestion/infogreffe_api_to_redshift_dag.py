@@ -4,7 +4,7 @@ from airflow.models import Variable
 from airflow.utils.dates import days_ago
 from airflow.operators.dummy import DummyOperator
 from ec2operators import Ec2BashExecutor, Ec2Creator, Ec2Terminator
-from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert
+from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert, RedshiftQualityCheck
 import os
 
 
@@ -74,7 +74,7 @@ with DAG(
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
         dag=dag,
-        sql='schema_infogreffe_staging_datalake'
+        sql='schema_infogreffe_staging_datalake.sql'
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
@@ -95,6 +95,12 @@ with DAG(
         pkey="infogreffe_uid",
         sql="SELECT * FROM staging.infogreffe_unique"
     )
+    q_check = RedshiftQualityCheck(
+        task_id='quality_check',
+        schema="datalake",
+        table="infogreffe_attributes",
+        pkey="infogreffe_uid"
+    )
 
     start_infogreffe >> create_ec2_if_not_exists >> download_from_api_to_s3 >> stop_ec2
-    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> stop_infogreffe
+    stop_ec2 >> create_redshift >> copy_from_s3 >> upsert_datalake >> q_check >> stop_infogreffe

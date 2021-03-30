@@ -2,7 +2,7 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.operators.dummy import DummyOperator
-from redshiftoperators import RedshiftOperator
+from redshiftoperators import RedshiftOperator, RedshiftQualityCheck
 
 import os
 
@@ -41,8 +41,15 @@ with DAG(
         sql='refresh_siren.sql'
     )
 
+    q_check = RedshiftQualityCheck(
+        task_id='quality_check',
+        schema="dwh",
+        table="siren_attributes",
+        pkey="siren"
+    )
+
     stop_refresh = DummyOperator(
         task_id='stop_refresh'
     )
 
-    start_refresh >> create_dwh >> refresh_dwh >> stop_refresh
+    start_refresh >> create_dwh >> refresh_dwh >> q_check >> stop_refresh

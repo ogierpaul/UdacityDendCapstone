@@ -2,7 +2,7 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.operators.dummy import DummyOperator
-from redshiftoperators import RedshiftOperator
+from redshiftoperators import RedshiftOperator, RedshiftQualityCheck
 
 import os
 
@@ -41,8 +41,22 @@ with DAG(
         sql='refresh_decp.sql'
     )
 
+    q_check_marches = RedshiftQualityCheck(
+        task_id='quality_check_marches',
+        schema="dwh",
+        table="decp_marches",
+        pkey="decp_uid"
+    )
+
+    q_check_titulaires = RedshiftQualityCheck(
+        task_id='quality_check_titulaires',
+        schema="dwh",
+        table="decp_titulaires",
+        pkey="decp_bridge_uid"
+    )
+
     stop_refresh = DummyOperator(
         task_id='stop_refresh'
     )
 
-    start_refresh >> create_dwh >> refresh_dwh >> stop_refresh
+    start_refresh >> create_dwh >> refresh_dwh >> [q_check_titulaires, q_check_marches] >> stop_refresh

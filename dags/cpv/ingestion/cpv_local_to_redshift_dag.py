@@ -4,7 +4,7 @@ from airflow import DAG
 from airflow.models import Variable
 from airflow.utils.dates import days_ago
 from s3uploader import S3UploadFromLocal
-from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert
+from redshiftoperators import RedshiftCopyFromS3, RedshiftOperator, RedshiftUpsert, RedshiftQualityCheck
 import os
 
 
@@ -51,7 +51,7 @@ with DAG(
 
     create_redshift = RedshiftOperator(
         task_id='create_redshift',
-        sql='schema_cpv_staging_datalake'
+        sql='schema_cpv_staging_datalake.sql'
     )
 
     copy_from_s3 = RedshiftCopyFromS3(
@@ -71,4 +71,12 @@ with DAG(
          pkey="codecpv",
          sql="SELECT * FROM staging.cpv_attributes"
     )
-    start_cpv >> upload_cpv_to_s3 >> create_redshift >>  copy_from_s3 >> upsert_datalake >> stop_cpv
+
+    q_check = RedshiftQualityCheck(
+        task_id='quality_check',
+        schema="datalake",
+        table="cpv_attributes",
+        pkey="codecpv"
+    )
+
+    start_cpv >> upload_cpv_to_s3 >> create_redshift >>  copy_from_s3 >> upsert_datalake >> q_check >> stop_cpv

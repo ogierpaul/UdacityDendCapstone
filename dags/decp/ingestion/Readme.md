@@ -40,6 +40,7 @@
 - `TRUNCATE` the staging tables
 - `COPY` the two files from S3
 - `INSERT INTO` the datalake
+- Quality checks (Table not empty - no duplicates on primary key)
 
 ## Dags Parameters and code
 ### EC2 Config

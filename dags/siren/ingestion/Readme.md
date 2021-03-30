@@ -30,6 +30,7 @@
 - `TRUNCATE` the staging table
 - `COPY` the csv file from S3
 - `INSERT INTO` the datalake
+- Quality checks (Table not empty - no duplicates on primary key)
 
 ## Dags Parameters and code
 ### EC2 Config

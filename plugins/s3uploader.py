@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 import os
 
 class S3UploadFromLocal(BaseOperator):
-    ui_color = "#9bf6ff",
+    ui_color = "#e76f51",
     template_fields = ('working_dir', 'fn', 's3_bucket',  's3_folder',)
 
     @apply_defaults

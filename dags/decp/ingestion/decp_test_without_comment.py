@@ -39,7 +39,7 @@ ec2_config = {
 
 
 with DAG(
-    'decp_web_to_redshift_dag',
+    'decp_test_wo_comment',
     default_args=default_args,
     description='Download DECP data from Web to Redshift',
     schedule_interval=None,
@@ -48,41 +48,6 @@ with DAG(
     _docs_md_fp = os.path.join(default_args['working_dir'], 'Readme.md')
     dag.doc_md = open(_docs_md_fp, 'r').read()
 
-    start_decp = DummyOperator(
-        task_id='Start_decp'
-    )
-
-    upload_config_marches = S3UploadFromLocal(
-        task_id='Upload_config_marches',
-        fn='jq_marches.sh',
-        s3_folder='config/'
-    )
-    upload_config_titulaires = S3UploadFromLocal(
-        task_id='Upload_config_titulaires',
-        fn='jq_titulaires.sh',
-        s3_folder='config/'
-    )
-    create_ec2 = Ec2Creator(
-        task_id='decp_create_ec2',
-        retry=30,
-        sleep=5,
-        **ec2_config
-    )
-
-    download_extract_copy_file = Ec2BashExecutor(
-        task_id='decp_download_extract_copy_file',
-        dag=dag,
-        bash='ec2_commands.sh ',
-        sleep=10,
-        retry=30
-    )
-
-    stop_ec2 = Ec2Terminator(
-        task_id='stop_ec2',
-        dag=dag,
-        terminate='stop',
-        trigger_rule='all_done'
-    )
 
     create_schema = RedshiftOperator(
         task_id='create_decp_schema',
@@ -144,8 +109,7 @@ with DAG(
     )
 
 
-start_decp >> [upload_config_marches, upload_config_titulaires] >> create_ec2 >> download_extract_copy_file >> stop_ec2
-stop_ec2 >> create_schema >> [copy_titulaires_from_s3, copy_marches_from_s3]
+create_schema >> [copy_titulaires_from_s3, copy_marches_from_s3]
 copy_marches_from_s3 >> upsert_marches >> q_check_marches
 copy_titulaires_from_s3 >> upsert_titulaires >> q_check_titulaires
 [q_check_marches, q_check_titulaires] >> stop_decp

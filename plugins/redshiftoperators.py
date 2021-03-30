@@ -46,7 +46,6 @@ def read_instructions(s, file_ending=('.sql'), file_split=';', file_comment='-',
             pass
     commands_stripped = map(lambda c: c.strip(file_strip), commands_unformatted)
     commands_stripped = filter(lambda c: len(c) > 0, commands_stripped)
-    commands_stripped = filter(lambda c: c[0] != file_comment, commands_stripped)
     commands_stripped = tuple(commands_stripped)
     return commands_stripped
 
@@ -244,3 +243,65 @@ class RedshiftUpsert(RedshiftOperator):
         }
         super(RedshiftUpsert, self).__init__(redshift_conn_id=redshift_conn_id, sql=self.q_all, params_sql=params_sql,
                                              *args, **kwargs)
+
+
+class RedshiftQualityCheck(BaseOperator):
+    ui_color = "#2a9d8f"
+    q_row_count = S.SQL("SELECT COUNT(*) AS n from {schema}.{table};")
+    q_dupes = S.SQL("""
+    SELECT MAX(n)  as n_pkey
+    FROM (
+        SELECT {pkey}, COUNT(*) as n
+        FROM {schema}.{table}
+        GROUP BY {pkey} 
+    ) b; """)
+
+    @apply_defaults
+    def __init__(self, redshift_conn_id, schema="public", table="", pkey="", *args, **kwargs):
+        """
+        Checks that the table is not null and that there are no duplicates on the primary key of that table
+        Like PostgresOperator, but with argument Redshift_conn_id.
+
+        Args:
+            redshift_conn_id (str): Connection id in Airflow
+            schema (str): Schema
+            table (str): Table
+            pkey (str): Primary Kye
+            *args:
+            **kwargs:
+        """
+        self.redshift_conn_id = redshift_conn_id
+        self.schema = S.Identifier(schema)
+        self.table = S.Identifier(table)
+        self.pkey = S.Identifier(pkey)
+        super(RedshiftQualityCheck, self).__init__(*args, **kwargs)
+
+
+    def execute(self, context):
+        """
+        Data Quality Checks:
+        1. Check the target table has a positive number of rows
+        2. Check the target table has no duplicate primary key
+        Args:
+            context:
+
+        Returns:
+            None
+        """
+        hook = PostgresHook(postgres_conn_id=self.redshift_conn_id)
+        qf_row_count = self.q_row_count.format(schema=self.schema, table=self.table)
+        self.log.info('Starting Data Quality Checks')
+        # Test for presence of any records
+        records = hook.get_records(qf_row_count)
+        if any([len(records) < 1, len(records[0]) < 1, records[0][0] < 1]):
+            self.log.error("{} returned no lines".format(self.table))
+            raise ValueError("{} returned no lines".format(self.table))
+        del records
+        qf_dupes = self.q_dupes.format(schema=self.schema, table=self.table, pkey=self.pkey)
+        # Test for no duplicates
+        records = hook.get_records(qf_dupes)
+        if records[0][0] > 1:
+            self.log.error("{} returned  duplicates".format(self.table))
+            raise ValueError("{} returned duplicates".format(self.table))
+        self.log.info("Data Quality checked passed on {}".format(self.table))
+        pass

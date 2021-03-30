@@ -2,7 +2,7 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.operators.dummy import DummyOperator
-from redshiftoperators import RedshiftOperator
+from redshiftoperators import RedshiftOperator, RedshiftQualityCheck
 
 import os
 
@@ -41,8 +41,15 @@ with DAG(
         sql='refresh_cpv.sql'
     )
 
+    q_check = RedshiftQualityCheck(
+        task_id='quality_check',
+        schema="dwh",
+        table="cpv_attributes",
+        pkey="codecpv"
+    )
+
     stop_refresh = DummyOperator(
         task_id='stop_refresh'
     )
 
-    start_refresh >> create_cpv_dwh >> refresh_cpv_dwh >> stop_refresh
+    start_refresh >> create_cpv_dwh >> refresh_cpv_dwh >> q_check >> stop_refresh

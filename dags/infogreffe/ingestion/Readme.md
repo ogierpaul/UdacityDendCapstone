@@ -23,3 +23,4 @@
 - `INSERT INTO` the datalake
     - the table is normalized first
     - filter out rows with correct year formatting on column `millesime`
+- Quality checks (Table not empty - no duplicates on primary key)
