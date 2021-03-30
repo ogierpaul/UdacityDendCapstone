@@ -7,6 +7,10 @@
 - Updated daily
 
 ## Dags
+### Data flow
+![Dataflow](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/decp_dataflow.jpg)
+
+
 ### Ingestion
 ![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/ingest_decp_dag.png)
 

@@ -7,6 +7,12 @@
 - ~ 300 Mb in size
 - 2.4 million rows
 
+## Dags
+### Data flow
+![Dataflow](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/infogreffe_dataflow.jpg)
+
+
+
 ## Data description
 At the Data Warehouse Level:
 

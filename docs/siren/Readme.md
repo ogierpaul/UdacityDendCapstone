@@ -9,6 +9,9 @@
 - 23 millions lines
 
 ## Dags
+### Data flow
+![Dataflow](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/siren_dataflow.jpg)
+
 ### Ingestion
 ![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/ingest_siren_dag.png)
 
