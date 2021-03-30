@@ -6,7 +6,7 @@
 ## Ec2 Operators
 - Set of plugins interacting with Ec2 Instances
     - Create an Ec2 Instance
-    - Execute Commands on an EC2 Instance
+    - Execute Bash Commands on an EC2 Instance
     - Terminate an Ec2 Instance
 
 ## Redshift Operators
