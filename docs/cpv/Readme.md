@@ -6,9 +6,9 @@
 - Number of rows: 9k
 - size: 330kb
 
-## Dag
+## Dags
 ### Ingestion
-![IngestCPVDag](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/ingestion/ingest_cpv_dag.png)
+![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/ingestion/ingest_cpv_dag.png)
 
 ### Transformation
 ![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/transformation/refresh_cpv_dag.png)

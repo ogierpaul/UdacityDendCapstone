@@ -37,7 +37,8 @@
     - [Official Website](https://simap.ted.europa.eu/cpv)
     - Dimension, Axis: Procurement Contracts
     
-High Level Functional View
+High Level Functional View    
+
 ![HighLevelFunctionalView](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/high_level_functional_view.jpg)
 
 ### Technical Architecture Justification

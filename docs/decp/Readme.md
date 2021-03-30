@@ -6,6 +6,14 @@
 - 232k rows
 - Updated daily
 
+## Dags
+### Ingestion
+![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/ingestion/ingest_decp_dag.png)
+
+### Transformation
+![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/transformation/refresh_decp_dag.png)
+
+
 ## decp_marches and decp_titulaires
 - The raw data can be normalized in two tables
     - one containing the contract attributes: *decp_marches*
