@@ -88,6 +88,6 @@ High Level Functional View
     - I only need to run those statements once a week, so the costs are fairly low
 
 ## Results
-TODO: Write Results
+- See the views on the reporting layer
 
     
