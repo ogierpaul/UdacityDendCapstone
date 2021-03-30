@@ -2,7 +2,7 @@
 ## Origin
 - Classification and legal information on french firms & legal entities
 - [URL](https://www.data.gouv.fr/fr/datasets/r/204d7dd9-8002-43b2-8cd1-6f6eaa47e4b0)
-- [Description](https://www.data.gouv.fr/fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/)
+- [Description](https://www.data.gouv.fr/en/datasets/r/cd90dc24-72cf-4850-b04b-2bff3ba6f734)
 - [Official Website](https://www.data.gouv.fr/en/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/#_)
 - Published once a month
 - 2.6 Gb in Size
