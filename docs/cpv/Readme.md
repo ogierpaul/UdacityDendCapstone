@@ -8,10 +8,10 @@
 
 ## Dags
 ### Ingestion
-![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/ingestion/ingest_cpv_dag.png)
+![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/ingest_cpv_dag.png)
 
 ### Transformation
-![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/transformation/refresh_cpv_dag.png)
+![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/refresh_cpv_dag.png)
 
 ## Data description
 At the Data Warehouse Level:

@@ -42,9 +42,6 @@
 - `INSERT INTO` the datalake
 - Quality checks (Table not empty - no duplicates on primary key)
 
-## Dags Parameters and code
-![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/ingestion/ingest_decp_dag.png)
-
 ### EC2 Config
 - `dict` in the dag file
 - contains parameters of the EC2 machine to be created

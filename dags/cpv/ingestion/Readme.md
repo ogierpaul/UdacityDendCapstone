@@ -1,8 +1,7 @@
 # CPV (Tendering classification system)
 ## Dag purpose:  Load transactional data from a local file to Redshift
 - From a local csv file to a Resdhift Table
-
-![IngestCPVDag](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/ingest_cpv_dag.png)
+- See the docs for more info
 
 ### Source description: Standard CSV
 - The source is a local file, as there is no direct url link
