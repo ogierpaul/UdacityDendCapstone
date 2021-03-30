@@ -20,4 +20,7 @@ At the Data Warehouse Level:
 |`trancheEffectifsUniteLegale`| Tranch of number of employees|
 |`categorieentreprise`| |
 
-TOdo: complete
+## Transformations applied
+- Calculation of `euvat`
+- Calculation of `name`
+- In the data warehouse layer, only select rows where the `siren` is found in `decp_siren_used` 

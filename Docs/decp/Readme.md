@@ -44,8 +44,18 @@ At the data warehouse level
 |`titulaire_name`|Name of the supplier as given in DECP|
 |`titulaire_isocountry`|Country of the supplier, (ISO code, 2-digits), calculated from `euvat`|
 
-### Transformations
+
+## Transformations & Data Quality issues
 - Converting the raw json array to Json lines format
 - Extracting *decp_marches*, *decp_titulaires*, *decp_siren_used* from the raw Json file
-- Only select `titulaire_typeidentifiant` = VAT , Siren, or Siret (removing exotic identifiers)
+- Duplicates in `decp_titulaires` --> Creation of `decp_bridge_uid` for deduplication
+- Only select `titulaire_typeidentifiant` = VAT , Siren, or Siret (removing rare and exotic identifiers types)
+- `siren` , `siret` not always correct
+- Calculating `titulaite_isocountry` from the `euvat` code
+- Problem with encoding of `objet` --> to be clarified at source level
+- Issues with strange dates --> To be corrected using BI tools
+- Issues with anormal amounts (too big amounts) --> To be investigated with BI Tools, setting up a threshold
+- Potential harmonization of `acheteur_id` and `acheteur_name`
 - Only select valid identifiers (not nulls, ..), respecting the standardized format (9 digits for `siren`, ..)
+
+

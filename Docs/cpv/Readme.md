@@ -13,7 +13,8 @@ At the Data Warehouse Level:
 |`description`|description of code, in english, free text|
 
 ## Transformations applied
-- None
+- No blocking data quality issue
+- No transformations
 
 ## Future improvments
 - The cpv code has a hierarchical structure, i.e. codes are grouped within a family

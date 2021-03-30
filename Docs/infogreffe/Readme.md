@@ -22,7 +22,7 @@ At the Data Warehouse Level:
 |resultat|Profit (if available)|
 |effectif|Number of employees|
 
-## Transformation applied
+## Transformation applied & Data Quality issues
 - Normalize the data
     - source data has multiple years for each row: `ca_1` and `ca_2` for year 1 & 2
     - the data is normalized to `ca`, and year is an attribute (un-pivot that data, like *melt* table in pandas)
