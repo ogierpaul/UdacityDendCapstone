@@ -4,7 +4,6 @@
 
 ![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/transformation/refresh_decp_dag.png)
 
-
 ## Transformations applied
 ### Decp Marches
 - None
