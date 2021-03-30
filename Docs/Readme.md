@@ -12,18 +12,30 @@
 
 ## Architecture
 ### Functional Architecture: Data Sources used
+#### Identification of data source needed
+- We need both transactional / fact data (the contracts passed) and dimensional / master data (The attributes)
+- On the dimensions, three main dimensions are interesting:
+    - time
+    - Supplier
+    - Contract object / goods or service type
+    
+#### Data source description
 - DECP (*Données Essentielles de la Commande Publique*)
     - Contracts signed, description and their beneficiaries
     - [Official Website](https://www.data.gouv.fr/fr/datasets/5cd57bf68b4c4179299eb0e9/)
+    - Fact data: Axis: Contracts & Suppliers, Time
 - Siren (French commerce registry)
     - Classification and legal information on french firms & legal entities
     - [Official Website](https://www.data.gouv.fr/en/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/#_)
-- CPV (Goods and Service classification)
-    - The CPV establishes a single european classification system for public procurement
-    - [Official Website](https://simap.ted.europa.eu/cpv)
+    - Dimension: Axis: Suppliers
 - Infogreffe (Financial Statements)
     - Financial Statements and number of employees for french legal entities
     - [Official Website](https://datainfogreffe.fr/offres)
+    - Dimension: Axis: Supplier
+- CPV (Goods and Service classification)
+    - The CPV establishes a single european classification system for public procurement
+    - [Official Website](https://simap.ted.europa.eu/cpv)
+    - Dimension, Axis: Procurement Contracts
     
 High Level Functional View
 Todo: insert image
