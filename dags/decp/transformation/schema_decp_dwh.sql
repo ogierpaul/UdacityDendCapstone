@@ -122,3 +122,12 @@ CREATE TABLE IF NOT EXISTS dwh.decp_marches
 CREATE TABLE IF NOT EXISTS dwh.decp_siren_used (
     siren VARCHAR PRIMARY KEY
 );
+
+
+CREATE TABLE IF NOT EXISTS dwh.time (
+    "date" DATE PRIMARY KEY ,
+    "day"   INTEGER,
+    "month" INTEGER,
+    "year"  INTEGER,
+    "year_month" VARCHAR
+);
