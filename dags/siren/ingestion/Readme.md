@@ -53,3 +53,6 @@
 
 #### schema_infogreffe_staging_datalake.sql
 - Creation of Redshift schema for this dag
+
+## Reference
+- See [Documentation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/siren/Readme.md)
