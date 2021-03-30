@@ -14,6 +14,7 @@
     - Execute SQL queries or SQL scripts
     - Copy data from S3
     - Upsert data based on a primary key
+    - Perform Data Quality Checks
     
 ## S3 Uploader
 - Upload a local file to S3

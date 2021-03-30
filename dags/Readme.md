@@ -2,11 +2,6 @@
 ## Purpose
 - Store Dags to be Run in Airflow
 
-## Initialization Files
-- Create the connections
-- Create the Variables
-- Create the schemas in Redshift 
-- #TODO: Review and complete
 
 ## Ingestion and Transformation Dags
 - 4 Folders `cpv`, `decp`, `infogreffe`, `siren`
@@ -21,4 +16,10 @@
     - transformation : transform the data in the Data Warehouse layer
     - the reason that the transformation is not directly linked to the ingestion is that the transformation in the Data Warehouse layer is dependent on multiple data sources.
 
+## Initialization Files
+- directory `aa_setup`
+- Not a Dag!
+- Create the connections
+- Create the Variables
+- Create the schemas in Redshift 
  
