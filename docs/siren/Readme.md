@@ -27,7 +27,7 @@ At the Data Warehouse Level:
 |`name`|Concatenation of different possible name fields `nomUniteLegale`, `nomUsageUniteLegale`, `denominationUniteLegale`, `denominationUsuelle1UniteLegale`|
 |`economieSocialeSolidaireUniteLegale`| If the legal entity has a special non-profit status|
 |`trancheEffectifsUniteLegale`| Tranch of number of employees|
-|`categorieentreprise`| |
+|`categorieentreprise`| French legal classification|
 
 ## Transformations applied
 - Calculation of `euvat`
