@@ -8,10 +8,10 @@
 
 ## Dags
 ### Ingestion
-![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/ingestion/ingest_decp_dag.png)
+![Ingestion](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/ingest_decp_dag.png)
 
 ### Transformation
-![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/dags/cpv/transformation/refresh_decp_dag.png)
+![Transformation](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/refresh_decp_dag.png)
 
 
 ## decp_marches and decp_titulaires
