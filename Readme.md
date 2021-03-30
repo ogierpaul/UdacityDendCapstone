@@ -9,3 +9,4 @@
     - You will find the project description and architecture
 - Then to `docs/requirements_checklist.md`:
     - You will find where to find the implementation of each of the requirements
+- Thank you
