@@ -26,6 +26,7 @@
     - [Official Website](https://datainfogreffe.fr/offres)
     
 High Level Functional View
+Todo: insert image
 
 ### Technical Architecture Justification
 #### Data sources technology
@@ -35,6 +36,8 @@ High Level Functional View
     
 #### Data flow
 - Download from web >> copy to S3 >> staging area on Redshift >> datalake (Redshift) >> Data Warehouse (Redshift)
+
+Todo: insert image
 
 #### Redshift as DB Backend
 - Redshift: column-oriented DBMS
