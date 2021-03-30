@@ -8,7 +8,7 @@
 
 ## Dags
 ### Data flow
-![Dataflow](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/decp_dataflow.jpg)
+![Dataflow](https://github.com/ogierpaul/UdacityDendCapstone/blob/master/docs/images/dags/decp_dataflow.png)
 
 
 ### Ingestion
