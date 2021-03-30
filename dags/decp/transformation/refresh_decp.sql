@@ -7,7 +7,7 @@ SELECT * FROM datalake.decp_titulaires_standardized;
 TRUNCATE dwh.decp_marches;
 
 INSERT INTO dwh.decp_marches
-SELECT * FROM datalake.decp_marches;
+SELECT * FROM datalake.decp_marches_prepared;
 
 TRUNCATE dwh.decp_siren_used;
 

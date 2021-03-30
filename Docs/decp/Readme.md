@@ -3,6 +3,7 @@
 - Contracts signed, description and their beneficiaries
 - [Official Website](https://www.data.gouv.fr/fr/datasets/5cd57bf68b4c4179299eb0e9/)
 - 300 Mb
+- 232k rows
 - Updated daily
 
 ## decp_marches and decp_titulaires
@@ -30,6 +31,7 @@
 |`formeprix`| Type of price (fixed, ...) |
 |`acheteur_id`| Id of the purchasing entity|
 |`acheteur_name`| Name of the purhcasing entity |
+|`suspicious_amount`|If the amount is greater than 99 million euros|
 
 ## decp_titulaires
 At the data warehouse level

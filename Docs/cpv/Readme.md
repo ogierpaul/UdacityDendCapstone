@@ -3,13 +3,15 @@
 - [Official Website](https://simap.ted.europa.eu/cpv)
 - Excel file format at first, transformed to csv
 - Changing very slowly, last update 2013
+- Number of rows: 9k
+- size: 330kb
 
 ## Data description
 At the Data Warehouse Level:
 
 |column|description|
 |---|---|
-|`codecpv`|9-digits code, unique identifier|
+|`codecpv`|8-digits code, unique identifier|
 |`description`|description of code, in english, free text|
 
 ## Transformations applied
@@ -18,5 +20,5 @@ At the Data Warehouse Level:
 
 ## Future improvments
 - The cpv code has a hierarchical structure, i.e. codes are grouped within a family
-    - i.e. code 123456789 and code 123456780 are related and belong to the same family 123456
+    - i.e. code 12345678 and code 12345670 are related and belong to the same family 123456
 - a nice future improvment would be to get the description of this family 

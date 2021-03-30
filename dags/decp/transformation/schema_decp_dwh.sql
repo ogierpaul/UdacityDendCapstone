@@ -80,6 +80,25 @@ CREATE TABLE IF NOT EXISTS dwh.decp_titulaires(
     titulaire_iso_country VARCHAR
 );
 
+CREATE OR REPLACE VIEW datalake.decp_marches_prepared AS
+SELECT "decp_uid",
+       "source",
+       "decp_id",
+       "type",
+       "nature",
+       "procedure",
+       "objet",
+       "codecpv",
+       "dureemois",
+       "datenotification",
+       "datepublicationdonnees",
+       "montant",
+       "formeprix",
+       "acheteur_id",
+       "acheteur_name",
+       CASE WHEN montant >= 99000000 THEN 1 ELSE 0 END as "suspicious_amount"
+FROM datalake.decp_marches;
+
 CREATE TABLE IF NOT EXISTS dwh.decp_marches
 (
     "decp_uid"               VARCHAR PRIMARY KEY,
@@ -96,7 +115,8 @@ CREATE TABLE IF NOT EXISTS dwh.decp_marches
     "montant"                DOUBLE PRECISION,
     "formeprix"              varchar,
     "acheteur_id"            VARCHAR,
-    "acheteur_name"          VARCHAR
+    "acheteur_name"          VARCHAR,
+    "suspicious_amount"     INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS dwh.decp_siren_used (
